@@ -1,0 +1,126 @@
+<?php
+
+use App\Http\Controllers\Api\V1\AnalyticsController;
+use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressController;
+use App\Http\Controllers\Api\V1\Client\CategoryController as ClientCategoryController;
+use App\Http\Controllers\Api\V1\Client\CouponController as ClientCouponController;
+use App\Http\Controllers\Api\V1\Client\HomeController as ClientHomeController;
+use App\Http\Controllers\Api\V1\Client\OrderController as ClientOrderController;
+use App\Http\Controllers\Api\V1\Client\ProductController as ClientProductController;
+use App\Http\Controllers\Api\V1\Client\ReviewController as ClientReviewController;
+use App\Http\Controllers\Api\V1\Client\StoreController as ClientStoreController;
+use App\Http\Controllers\Api\V1\CouponController;
+use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\Seller\AnalyticsController as SellerAnalyticsController;
+use App\Http\Controllers\Api\V1\Seller\OrderController as SellerOrderController;
+use App\Http\Controllers\Api\V1\Seller\ProductController as SellerProductController;
+use App\Http\Controllers\Api\V1\Seller\StoreController as SellerStoreController;
+use App\Http\Controllers\Api\V1\Seller\UploadController as SellerUploadController;
+use App\Http\Controllers\Api\V1\UserController;
+use Illuminate\Support\Facades\Route;
+
+Route::prefix('v1')->group(function () {
+
+    // Auth routes — public
+    Route::prefix('auth')->group(function () {
+        Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
+        Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
+        Route::post('/google', [AuthController::class, 'google'])->middleware('throttle:login');
+
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('/me', [AuthController::class, 'me']);
+            Route::post('/logout', [AuthController::class, 'logout']);
+            Route::patch('/onboarding', [AuthController::class, 'onboarding']);
+        });
+    });
+
+    // Public client routes (browsable without auth)
+    Route::get('/home', [ClientHomeController::class, 'index']);
+    Route::get('/categories', [ClientCategoryController::class, 'index']);
+    Route::get('/categories/{category}', [ClientCategoryController::class, 'show']);
+    Route::get('/client/products', [ClientProductController::class, 'index']);
+    Route::get('/client/products/{product}', [ClientProductController::class, 'show']);
+    Route::get('/stores', [ClientStoreController::class, 'index']);
+    Route::get('/stores/{store}', [ClientStoreController::class, 'show']);
+
+    // Authenticated client routes
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/client/coupons/check', [ClientCouponController::class, 'check']);
+
+        Route::post('/client/orders', [ClientOrderController::class, 'store']);
+        Route::get('/client/orders', [ClientOrderController::class, 'index']);
+        Route::get('/client/orders/{order}', [ClientOrderController::class, 'show']);
+        Route::get('/client/orders/{order}/review', [ClientReviewController::class, 'show']);
+        Route::post('/client/orders/{order}/review', [ClientReviewController::class, 'store']);
+
+        Route::get('/addresses', [ClientAddressController::class, 'index']);
+        Route::post('/addresses', [ClientAddressController::class, 'store']);
+        Route::get('/addresses/{address}', [ClientAddressController::class, 'show']);
+        Route::put('/addresses/{address}', [ClientAddressController::class, 'update']);
+        Route::delete('/addresses/{address}', [ClientAddressController::class, 'destroy']);
+        Route::patch('/addresses/{address}/default', [ClientAddressController::class, 'setDefault']);
+    });
+
+    // Seller only routes
+    Route::middleware(['auth:sanctum', 'role:seller'])->prefix('seller')->group(function () {
+        Route::post('/upload/image', [SellerUploadController::class, 'image']);
+
+        Route::get('/store', [SellerStoreController::class, 'show']);
+        Route::post('/store', [SellerStoreController::class, 'store']);
+        Route::put('/store', [SellerStoreController::class, 'update']);
+        Route::patch('/store/open', [SellerStoreController::class, 'toggleOpen']);
+
+        Route::get('/products', [SellerProductController::class, 'index']);
+        Route::post('/products', [SellerProductController::class, 'store']);
+        Route::get('/products/{product}', [SellerProductController::class, 'show']);
+        Route::put('/products/{product}', [SellerProductController::class, 'update']);
+        Route::delete('/products/{product}', [SellerProductController::class, 'destroy']);
+
+        Route::get('/orders', [SellerOrderController::class, 'index']);
+        Route::get('/orders/{order}', [SellerOrderController::class, 'show']);
+        Route::patch('/orders/{order}/status', [SellerOrderController::class, 'updateStatus']);
+
+        Route::prefix('analytics')->group(function () {
+            Route::get('/overview', [SellerAnalyticsController::class, 'overview']);
+            Route::get('/revenue', [SellerAnalyticsController::class, 'revenue']);
+            Route::get('/top-products', [SellerAnalyticsController::class, 'topProducts']);
+        });
+    });
+
+    // Admin only routes
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+
+        // Orders
+        Route::get('/orders', [OrderController::class, 'index']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+        Route::patch('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+
+        // Products
+        Route::get('/products', [ProductController::class, 'index']);
+        Route::patch('/products/{product}/status', [ProductController::class, 'updateStatus']);
+
+        // Users
+        Route::get('/users', [UserController::class, 'index']);
+        Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+
+        // Coupons
+        Route::get('/coupons', [CouponController::class, 'index']);
+        Route::post('/coupons', [CouponController::class, 'store']);
+        Route::put('/coupons/{coupon}', [CouponController::class, 'update']);
+        Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy']);
+
+        // Analytics
+        Route::prefix('analytics')->group(function () {
+            Route::get('/overview', [AnalyticsController::class, 'overview']);
+            Route::get('/revenue', [AnalyticsController::class, 'revenue']);
+            Route::get('/orders', [AnalyticsController::class, 'orders']);
+            Route::get('/users', [AnalyticsController::class, 'users']);
+            Route::get('/top-products', [AnalyticsController::class, 'topProducts']);
+            Route::get('/top-sellers', [AnalyticsController::class, 'topSellers']);
+        });
+
+    });
+
+});

@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Http\Resources;
+
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class CouponResource extends JsonResource
+{
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'code' => $this->code,
+            'type' => $this->type,
+            'value' => $this->value,
+            'min_order_amount' => $this->min_order_amount,
+            'usage_limit' => $this->usage_limit,
+            'used_count' => $this->used_count,
+            'active' => $this->active,
+            'expires_at' => $this->expires_at?->toDateString(),
+            'created_at' => $this->created_at->toDateString(),
+        ];
+    }
+}
