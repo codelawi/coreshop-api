@@ -24,17 +24,17 @@ class SellerOrderResource extends JsonResource
             'delivery_fee' => $this->delivery_fee,
             'total' => $this->total,
             'notes' => $this->notes,
-            'client' => $this->whenLoaded('client', fn () => [
+            'client' => $this->whenLoaded('client', fn () => $this->client ? [
                 'id' => $this->client->id,
                 'name' => $this->client->name,
                 'phone' => $this->client->phone,
-            ]),
-            'address' => $this->whenLoaded('address', fn () => [
+            ] : null),
+            'address' => $this->whenLoaded('address', fn () => $this->address ? [
                 'address_line' => $this->address->address_line,
                 'city' => $this->address->city,
                 'recipient_name' => $this->address->recipient_name,
                 'phone' => $this->address->phone,
-            ]),
+            ] : null),
             'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
                 'id' => $item->id,
                 'product_name' => $item->product_name,
@@ -43,7 +43,7 @@ class SellerOrderResource extends JsonResource
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'total' => $item->total,
-            ])),
+            ])->values()->all()),
             'items_count' => $this->items_count,
             'created_at' => $this->created_at->toDateTimeString(),
         ];

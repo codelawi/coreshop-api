@@ -40,16 +40,11 @@ class OrderController extends Controller
         $orders = Order::with(['store', 'items'])
             ->where('client_id', Auth::id())
             ->latest()
-            ->paginate($request->integer('per_page', 10));
+            ->get();
 
         return response()->json([
             'success' => true,
             'data' => ClientOrderResource::collection($orders),
-            'meta' => [
-                'current_page' => $orders->currentPage(),
-                'last_page' => $orders->lastPage(),
-                'total' => $orders->total(),
-            ],
         ]);
     }
 

@@ -43,7 +43,7 @@ class ClientOrderResource extends JsonResource
                 'quantity' => $item->quantity,
                 'unit_price' => $item->unit_price,
                 'total' => $item->total,
-            ])),
+            ])->values()->all()),
             'items_count' => $this->whenLoaded('items', fn () => $this->items->count()),
             'created_at' => $this->created_at->toIso8601String(),
             'approved_at' => $this->approved_at?->toIso8601String(),

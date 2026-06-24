@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\SellerStoreResource;
+use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,17 +45,19 @@ class StoreController extends Controller
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
             'delivery_radius_km' => ['nullable', 'integer', 'min:1', 'max:100'],
+            'logo' => ['nullable', 'string', 'max:500'],
+            'banner' => ['nullable', 'string', 'max:500'],
             'working_hours' => ['nullable', 'array'],
         ]);
 
         $data['seller_id'] = $user->id;
         $data['slug'] = Str::slug($data['name']);
 
-        if (isset($data['slug']) && \App\Models\Store::where('slug', $data['slug'])->exists()) {
-            $data['slug'] = $data['slug'] . '-' . Str::random(4);
+        if (isset($data['slug']) && Store::where('slug', $data['slug'])->exists()) {
+            $data['slug'] = $data['slug'].'-'.Str::random(4);
         }
 
-        $store = \App\Models\Store::create($data);
+        $store = Store::create($data);
         $store->loadCount(['products', 'orders as pending_orders_count' => fn ($q) => $q->where('status', 'pending')]);
 
         return response()->json([
@@ -68,12 +71,12 @@ class StoreController extends Controller
     {
         $store = Auth::user()->store;
 
-        if (!$store) {
+        if (! $store) {
             return response()->json(['success' => false, 'message' => 'No store found.'], 404);
         }
 
         $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:100', 'unique:stores,name,' . $store->id],
+            'name' => ['sometimes', 'string', 'max:100', 'unique:stores,name,'.$store->id],
             'description' => ['nullable', 'string', 'max:1000'],
             'phone' => ['nullable', 'string', 'max:20'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -100,11 +103,11 @@ class StoreController extends Controller
     {
         $store = Auth::user()->store;
 
-        if (!$store) {
+        if (! $store) {
             return response()->json(['success' => false, 'message' => 'No store found.'], 404);
         }
 
-        $store->update(['is_open' => !$store->is_open]);
+        $store->update(['is_open' => ! $store->is_open]);
 
         return response()->json([
             'success' => true,

@@ -2,17 +2,19 @@
 
 namespace App\Models;
 
+use App\Notifications\Auth\EmailVerificationNotification;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -27,6 +29,7 @@ class User extends Authenticatable
         'latitude',
         'longitude',
         'interests',
+        'expo_push_token',
     ];
 
     protected $hidden = [
@@ -72,6 +75,11 @@ class User extends Authenticatable
         return $this->hasMany(Review::class);
     }
 
+    public function wishlist()
+    {
+        return $this->belongsToMany(Product::class, 'wishlists')->withTimestamps();
+    }
+
     public function deliveries()
     {
         return $this->hasMany(Order::class, 'driver_id');
@@ -106,5 +114,10 @@ class User extends Authenticatable
     public function defaultAddress()
     {
         return $this->addresses()->where('is_default', true)->first();
+    }
+
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new EmailVerificationNotification);
     }
 }

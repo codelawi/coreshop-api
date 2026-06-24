@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class OrderService
 {
+    public function __construct(private readonly ExpoPushService $push) {}
+
     /**
      * @param array{
      *   address_id: int,
@@ -137,6 +139,15 @@ class OrderService
             ]);
 
             $order->items()->createMany($resolvedItems);
+
+            // Notify the seller about the new order
+            $seller = $store->seller;
+            if ($seller) {
+                $this->push->sendToUser($seller, 'New Order!', 'You have a new order #'.$order->id.' waiting for approval.', [
+                    'type' => 'new_order',
+                    'order_id' => $order->id,
+                ]);
+            }
 
             return $order->load(['store', 'address', 'items', 'coupon']);
         });

@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Client\OrderController as ClientOrderController;
 use App\Http\Controllers\Api\V1\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Api\V1\Client\ReviewController as ClientReviewController;
 use App\Http\Controllers\Api\V1\Client\StoreController as ClientStoreController;
+use App\Http\Controllers\Api\V1\Client\WishlistController as ClientWishlistController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Api\V1\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Api\V1\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Api\V1\Seller\StoreController as SellerStoreController;
 use App\Http\Controllers\Api\V1\Seller\UploadController as SellerUploadController;
+use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,11 +30,19 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
         Route::post('/google', [AuthController::class, 'google'])->middleware('throttle:login');
+        Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
+        Route::get('/reset-password', [AuthController::class, 'showResetForm']);
+        Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+        Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+            ->middleware('signed')
+            ->name('api.email.verify');
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::get('/me', [AuthController::class, 'me']);
             Route::post('/logout', [AuthController::class, 'logout']);
             Route::patch('/onboarding', [AuthController::class, 'onboarding']);
+            Route::post('/email/resend', [AuthController::class, 'resendVerification']);
+            Route::patch('/push-token', [AuthController::class, 'savePushToken']);
         });
     });
 
@@ -47,6 +57,8 @@ Route::prefix('v1')->group(function () {
 
     // Authenticated client routes
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/upload/avatar', [UploadController::class, 'avatar']);
+
         Route::get('/client/coupons/check', [ClientCouponController::class, 'check']);
 
         Route::post('/client/orders', [ClientOrderController::class, 'store']);
@@ -54,6 +66,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/client/orders/{order}', [ClientOrderController::class, 'show']);
         Route::get('/client/orders/{order}/review', [ClientReviewController::class, 'show']);
         Route::post('/client/orders/{order}/review', [ClientReviewController::class, 'store']);
+
+        Route::get('/client/wishlist', [ClientWishlistController::class, 'index']);
+        Route::get('/client/wishlist/ids', [ClientWishlistController::class, 'ids']);
+        Route::post('/client/wishlist/{product}', [ClientWishlistController::class, 'toggle']);
 
         Route::get('/addresses', [ClientAddressController::class, 'index']);
         Route::post('/addresses', [ClientAddressController::class, 'store']);
