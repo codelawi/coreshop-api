@@ -1,6 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
+use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
+use App\Http\Controllers\Api\V1\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressController;
@@ -44,6 +47,8 @@ Route::prefix('v1')->group(function () {
             Route::patch('/onboarding', [AuthController::class, 'onboarding']);
             Route::post('/email/resend', [AuthController::class, 'resendVerification']);
             Route::patch('/push-token', [AuthController::class, 'savePushToken']);
+            Route::patch('/profile', [AuthController::class, 'updateProfile']);
+            Route::patch('/change-password', [AuthController::class, 'changePassword']);
         });
     });
 
@@ -129,6 +134,21 @@ Route::prefix('v1')->group(function () {
         Route::post('/coupons', [CouponController::class, 'store']);
         Route::put('/coupons/{coupon}', [CouponController::class, 'update']);
         Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy']);
+
+        // Upload (admin)
+        Route::post('/upload/image', [AdminUploadController::class, 'image']);
+
+        // Banners
+        Route::get('/banners', [AdminBannerController::class, 'index']);
+        Route::post('/banners', [AdminBannerController::class, 'store']);
+        Route::put('/banners/{banner}', [AdminBannerController::class, 'update']);
+        Route::delete('/banners/{banner}', [AdminBannerController::class, 'destroy']);
+        Route::patch('/banners/{banner}/toggle', [AdminBannerController::class, 'toggle']);
+        Route::post('/banners/reorder', [AdminBannerController::class, 'reorder']);
+
+        // Categories
+        Route::get('/admin/categories', [AdminCategoryController::class, 'index']);
+        Route::put('/admin/categories/{category}', [AdminCategoryController::class, 'update']);
 
         // Stores (admin)
         Route::get('/stores', [AdminStoreController::class, 'index']);
