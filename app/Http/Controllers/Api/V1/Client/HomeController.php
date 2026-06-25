@@ -22,20 +22,20 @@ class HomeController extends Controller
             ->roots()
             ->orderBy('sort_order')
             ->limit(10)
-            ->get(['id', 'name', 'slug', 'image', 'icon']);
+            ->get(['id', 'name', 'name_ar', 'slug', 'image', 'icon']);
 
         $flashDeals = Product::approved()
             ->inStock()
             ->whereNotNull('original_price')
             ->whereColumn('price', '<', 'original_price')
-            ->with(['productImages' => fn($q) => $q->where('is_primary', true)])
+            ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
             ->orderByDesc('sales_count')
             ->limit(10)
             ->get();
 
         $trending = Product::approved()
             ->inStock()
-            ->with(['productImages' => fn($q) => $q->where('is_primary', true)])
+            ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
             ->orderByDesc('sales_count')
             ->limit(10)
             ->get();
@@ -43,7 +43,7 @@ class HomeController extends Controller
         $featured = Product::approved()
             ->inStock()
             ->where('is_featured', true)
-            ->with(['productImages' => fn($q) => $q->where('is_primary', true)])
+            ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
             ->limit(10)
             ->get();
 
@@ -69,6 +69,7 @@ class HomeController extends Controller
     {
         return $products->map(function ($p) {
             $primary = $p->productImages->first();
+
             return [
                 'id' => $p->id,
                 'name' => $p->name,

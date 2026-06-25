@@ -45,7 +45,7 @@ class OrderController extends Controller
     {
         $this->authorizeOrder($order);
 
-        $order->load(['client', 'address', 'items', 'coupon']);
+        $order->loadCount('items')->load(['client', 'address', 'items', 'coupon']);
 
         return response()->json([
             'success' => true,
@@ -72,8 +72,10 @@ class OrderController extends Controller
 
         $order->update(['status' => $request->status]);
 
-        $order->load('client');
+        $order->load(['client', 'store.seller']);
+
         $this->notifyClient($order, $request->status);
+        $this->notifySeller($order, $request->status);
 
         return response()->json([
             'success' => true,
@@ -90,13 +92,40 @@ class OrderController extends Controller
             'ready_for_pickup' => ['Ready for Pickup', 'Your order #'.$order->id.' is ready and waiting for a driver.'],
         ];
 
-        if (! isset($messages[$status])) {
+        if (! isset($messages[$status]) || ! $order->client) {
             return;
         }
 
         [$title, $body] = $messages[$status];
 
         $this->push->sendToUser($order->client, $title, $body, [
+            'type' => 'order_status',
+            'order_id' => $order->id,
+            'status' => $status,
+        ]);
+    }
+
+    private function notifySeller(Order $order, string $status): void
+    {
+        $seller = $order->store?->seller;
+
+        if (! $seller) {
+            return;
+        }
+
+        $messages = [
+            'approved' => ['Order Confirmed', 'You confirmed order #'.$order->id.'. Start preparing it.'],
+            'preparing' => ['Preparing Order', 'You marked order #'.$order->id.' as being prepared.'],
+            'ready_for_pickup' => ['Awaiting Driver', 'Order #'.$order->id.' is ready. Waiting for a driver to pick it up.'],
+        ];
+
+        if (! isset($messages[$status])) {
+            return;
+        }
+
+        [$title, $body] = $messages[$status];
+
+        $this->push->sendToUser($seller, $title, $body, [
             'type' => 'order_status',
             'order_id' => $order->id,
             'status' => $status,

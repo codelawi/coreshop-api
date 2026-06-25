@@ -40,6 +40,7 @@ class SellerProductResource extends JsonResource
                 'size' => $v->size,
                 'color' => $v->color,
                 'color_hex' => $v->color_hex,
+                'image_url' => $v->image_url,
                 'sku' => $v->sku,
                 'price_adjustment' => $v->price_adjustment,
                 'stock' => $v->stock,

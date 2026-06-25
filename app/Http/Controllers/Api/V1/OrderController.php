@@ -45,8 +45,10 @@ class OrderController extends Controller
 
         $order->update(['status' => $request->status]);
 
-        $order->load('client');
+        $order->load(['client', 'store.seller']);
+
         $this->notifyClient($order, $request->status);
+        $this->notifySeller($order, $request->status);
 
         return response()->json([
             'success' => true,
@@ -59,11 +61,44 @@ class OrderController extends Controller
     {
         $messages = [
             'approved' => ['Order Approved!', 'Your order #'.$order->id.' has been approved and will be prepared soon.'],
+            'preparing' => ['Being Prepared', 'The seller is preparing your order #'.$order->id.'.'],
+            'ready_for_pickup' => ['Ready for Pickup', 'Your order #'.$order->id.' is ready and waiting for a driver.'],
             'assigned' => ['Driver Assigned', 'A driver has been assigned to your order #'.$order->id.'.'],
             'out_for_delivery' => ['On the Way!', 'Your order #'.$order->id.' is out for delivery.'],
             'delivered' => ['Order Delivered!', 'Your order #'.$order->id.' has been delivered. Enjoy!'],
+            'completed' => ['Order Completed', 'Your order #'.$order->id.' has been completed. Thank you!'],
             'cancelled' => ['Order Cancelled', 'Your order #'.$order->id.' has been cancelled.'],
             'refunded' => ['Order Refunded', 'Your order #'.$order->id.' has been refunded.'],
+        ];
+
+        if (! isset($messages[$status]) || ! $order->client) {
+            return;
+        }
+
+        [$title, $body] = $messages[$status];
+
+        $this->push->sendToUser($order->client, $title, $body, [
+            'type' => 'order_status',
+            'order_id' => $order->id,
+            'status' => $status,
+        ]);
+    }
+
+    private function notifySeller(Order $order, string $status): void
+    {
+        $seller = $order->store?->seller;
+
+        if (! $seller) {
+            return;
+        }
+
+        $messages = [
+            'assigned' => ['Driver Assigned', 'A driver has been assigned to order #'.$order->id.'.'],
+            'out_for_delivery' => ['Out for Delivery', 'Order #'.$order->id.' is now out for delivery.'],
+            'delivered' => ['Order Delivered', 'Order #'.$order->id.' has been delivered to the customer.'],
+            'completed' => ['Order Completed', 'Order #'.$order->id.' has been completed.'],
+            'cancelled' => ['Order Cancelled', 'Order #'.$order->id.' has been cancelled by the admin.'],
+            'refunded' => ['Order Refunded', 'Order #'.$order->id.' has been refunded by the admin.'],
         ];
 
         if (! isset($messages[$status])) {
@@ -72,7 +107,7 @@ class OrderController extends Controller
 
         [$title, $body] = $messages[$status];
 
-        $this->push->sendToUser($order->client, $title, $body, [
+        $this->push->sendToUser($seller, $title, $body, [
             'type' => 'order_status',
             'order_id' => $order->id,
             'status' => $status,

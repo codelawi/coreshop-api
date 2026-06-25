@@ -19,7 +19,7 @@ class ProductController extends Controller
     {
         $store = Auth::user()->store;
 
-        if (!$store) {
+        if (! $store) {
             return response()->json(['success' => false, 'message' => 'No store found.'], 404);
         }
 
@@ -57,7 +57,7 @@ class ProductController extends Controller
     {
         $store = Auth::user()->store;
 
-        if (!$store) {
+        if (! $store) {
             return response()->json(['success' => false, 'message' => 'No store found.'], 404);
         }
 
@@ -75,6 +75,7 @@ class ProductController extends Controller
             'variants.*.size' => ['nullable', 'string', 'max:50'],
             'variants.*.color' => ['nullable', 'string', 'max:50'],
             'variants.*.color_hex' => ['nullable', 'string', 'max:7'],
+            'variants.*.image_url' => ['nullable', 'string', 'max:500'],
             'variants.*.sku' => ['nullable', 'string', 'max:100'],
             'variants.*.price_adjustment' => ['nullable', 'numeric'],
             'variants.*.stock' => ['required_with:variants', 'integer', 'min:0'],
@@ -83,7 +84,7 @@ class ProductController extends Controller
         $product = DB::transaction(function () use ($data, $store) {
             $slug = Str::slug($data['name']);
             if (Product::where('slug', $slug)->exists()) {
-                $slug .= '-' . Str::random(4);
+                $slug .= '-'.Str::random(4);
             }
 
             $product = Product::create([
@@ -117,6 +118,7 @@ class ProductController extends Controller
                     'size' => $variant['size'] ?? null,
                     'color' => $variant['color'] ?? null,
                     'color_hex' => $variant['color_hex'] ?? null,
+                    'image_url' => $variant['image_url'] ?? null,
                     'sku' => $variant['sku'] ?? null,
                     'price_adjustment' => $variant['price_adjustment'] ?? 0,
                     'stock' => $variant['stock'],
@@ -148,9 +150,55 @@ class ProductController extends Controller
             'original_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['sometimes', 'integer', 'min:0'],
             'weight_grams' => ['nullable', 'integer', 'min:0'],
+            'images' => ['nullable', 'array', 'max:7'],
+            'images.*' => ['string', 'max:500'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.size' => ['nullable', 'string', 'max:50'],
+            'variants.*.color' => ['nullable', 'string', 'max:50'],
+            'variants.*.color_hex' => ['nullable', 'string', 'max:7'],
+            'variants.*.image_url' => ['nullable', 'string', 'max:500'],
+            'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'variants.*.price_adjustment' => ['nullable', 'numeric'],
+            'variants.*.stock' => ['required_with:variants', 'integer', 'min:0'],
         ]);
 
-        $product->update($data);
+        DB::transaction(function () use ($data, $product) {
+            $product->update(array_filter(
+                $data,
+                fn ($key) => in_array($key, ['name', 'description', 'category_id', 'price', 'original_price', 'stock', 'weight_grams']),
+                ARRAY_FILTER_USE_KEY
+            ));
+
+            if (array_key_exists('images', $data)) {
+                $product->productImages()->delete();
+                foreach ($data['images'] ?? [] as $i => $url) {
+                    ProductImage::create([
+                        'product_id' => $product->id,
+                        'url' => $url,
+                        'sort_order' => $i,
+                        'is_primary' => $i === 0,
+                    ]);
+                }
+            }
+
+            if (array_key_exists('variants', $data)) {
+                $product->variants()->delete();
+                foreach ($data['variants'] ?? [] as $variant) {
+                    ProductVariant::create([
+                        'product_id' => $product->id,
+                        'size' => $variant['size'] ?? null,
+                        'color' => $variant['color'] ?? null,
+                        'color_hex' => $variant['color_hex'] ?? null,
+                        'image_url' => $variant['image_url'] ?? null,
+                        'sku' => $variant['sku'] ?? null,
+                        'price_adjustment' => $variant['price_adjustment'] ?? 0,
+                        'stock' => $variant['stock'],
+                        'is_active' => true,
+                    ]);
+                }
+            }
+        });
+
         $product->load(['category', 'productImages', 'variants']);
 
         return response()->json([

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressController;
@@ -119,13 +120,22 @@ Route::prefix('v1')->group(function () {
 
         // Users
         Route::get('/users', [UserController::class, 'index']);
+        Route::patch('/users/{user}', [UserController::class, 'update']);
         Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+        Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
         // Coupons
         Route::get('/coupons', [CouponController::class, 'index']);
         Route::post('/coupons', [CouponController::class, 'store']);
         Route::put('/coupons/{coupon}', [CouponController::class, 'update']);
         Route::delete('/coupons/{coupon}', [CouponController::class, 'destroy']);
+
+        // Stores (admin)
+        Route::get('/stores', [AdminStoreController::class, 'index']);
+        Route::get('/stores/{store}', [AdminStoreController::class, 'show']);
+        Route::get('/stores/{store}/orders', [AdminStoreController::class, 'orders']);
+        Route::get('/stores/{store}/products', [AdminStoreController::class, 'products']);
+        Route::patch('/stores/{store}/status', [AdminStoreController::class, 'updateStatus']);
 
         // Analytics
         Route::prefix('analytics')->group(function () {

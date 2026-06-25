@@ -19,15 +19,43 @@ class MarketplaceSeeder extends Seeder
     {
         // CATEGORIES (parents + children)
         $tree = [
-            ['Fashion', 'shirt-01', ['Men', 'Women', 'Kids', 'Accessories']],
-            ['Electronics', 'smart-phone-01', ['Phones', 'Laptops', 'Headphones', 'Wearables']],
-            ['Beauty', 'make-up', ['Skincare', 'Makeup', 'Fragrance', 'Hair Care']],
-            ['Home', 'home-01', ['Furniture', 'Kitchen', 'Decor', 'Lighting']],
-            ['Sports', 'football', ['Fitness', 'Outdoor', 'Footwear']],
-            ['Grocery', 'shopping-cart-01', ['Snacks', 'Beverages', 'Pantry']],
+            ['Fashion', 'shirt-01', 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&h=400&fit=crop&q=80', [
+                ['Men',         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop&q=80'],
+                ['Women',       'https://images.unsplash.com/photo-1483985988355-763728e1935a?w=300&h=300&fit=crop&q=80'],
+                ['Kids',        'https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=300&h=300&fit=crop&q=80'],
+                ['Accessories', 'https://images.unsplash.com/photo-1608731267464-c0c889c2ff92?w=300&h=300&fit=crop&q=80'],
+            ]],
+            ['Electronics', 'smart-phone-01', 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop&q=80', [
+                ['Phones',      'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop&q=80'],
+                ['Laptops',     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=300&h=300&fit=crop&q=80'],
+                ['Headphones',  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&q=80'],
+                ['Wearables',   'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop&q=80'],
+            ]],
+            ['Beauty', 'make-up', 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=400&fit=crop&q=80', [
+                ['Skincare',  'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=300&h=300&fit=crop&q=80'],
+                ['Makeup',    'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=300&h=300&fit=crop&q=80'],
+                ['Fragrance', 'https://images.unsplash.com/photo-1541643600606-c53ba9d13c11?w=300&h=300&fit=crop&q=80'],
+                ['Hair Care', 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=300&h=300&fit=crop&q=80'],
+            ]],
+            ['Home', 'home-01', 'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400&h=400&fit=crop&q=80', [
+                ['Furniture', 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=300&h=300&fit=crop&q=80'],
+                ['Kitchen',   'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=300&h=300&fit=crop&q=80'],
+                ['Decor',     'https://images.unsplash.com/photo-1555696958-e1c5855dc06a?w=300&h=300&fit=crop&q=80'],
+                ['Lighting',  'https://images.unsplash.com/photo-1513506003901-9b41d65d6fb5?w=300&h=300&fit=crop&q=80'],
+            ]],
+            ['Sports', 'football', 'https://images.unsplash.com/photo-1517649763962-0c623066013b?w=400&h=400&fit=crop&q=80', [
+                ['Fitness',  'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=300&h=300&fit=crop&q=80'],
+                ['Outdoor',  'https://images.unsplash.com/photo-1551632811-561732d1e306?w=300&h=300&fit=crop&q=80'],
+                ['Footwear', 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300&h=300&fit=crop&q=80'],
+            ]],
+            ['Grocery', 'shopping-cart-01', 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&h=400&fit=crop&q=80', [
+                ['Snacks',    'https://images.unsplash.com/photo-1543362906-acfc16c67564?w=300&h=300&fit=crop&q=80'],
+                ['Beverages', 'https://images.unsplash.com/photo-1541167760496-1628856ab772?w=300&h=300&fit=crop&q=80'],
+                ['Pantry',    'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&h=300&fit=crop&q=80'],
+            ]],
         ];
 
-        foreach ($tree as $i => [$name, $icon, $children]) {
+        foreach ($tree as $i => [$name, $icon, $image, $children]) {
             $parent = Category::updateOrCreate(
                 ['slug' => Str::slug($name)],
                 [
@@ -35,18 +63,18 @@ class MarketplaceSeeder extends Seeder
                     'icon' => $icon,
                     'sort_order' => $i,
                     'is_active' => true,
-                    'image' => "https://picsum.photos/seed/cat-{$i}/400/400",
+                    'image' => $image,
                 ]
             );
-            foreach ($children as $j => $child) {
+            foreach ($children as $j => [$child, $childImage]) {
                 Category::updateOrCreate(
-                    ['slug' => Str::slug($name . '-' . $child)],
+                    ['slug' => Str::slug($name.'-'.$child)],
                     [
                         'parent_id' => $parent->id,
                         'name' => $child,
                         'sort_order' => $j,
                         'is_active' => true,
-                        'image' => "https://picsum.photos/seed/cat-{$i}-{$j}/300/300",
+                        'image' => $childImage,
                     ]
                 );
             }
@@ -63,9 +91,9 @@ class MarketplaceSeeder extends Seeder
 
         foreach ($storeData as $i => [$storeName, $catName, $lat, $lng]) {
             $seller = User::firstOrCreate(
-                ['email' => 'seller' . ($i + 1) . '@coreshop.com'],
+                ['email' => 'seller'.($i + 1).'@coreshop.com'],
                 [
-                    'name' => $storeName . ' Owner',
+                    'name' => $storeName.' Owner',
                     'password' => Hash::make('password123'),
                     'role' => 'seller',
                     'status' => 'active',
@@ -85,7 +113,7 @@ class MarketplaceSeeder extends Seeder
                     'logo' => "https://picsum.photos/seed/store-{$i}-logo/200/200",
                     'banner' => "https://picsum.photos/seed/store-{$i}-banner/800/300",
                     'description' => "Welcome to {$storeName}. We sell quality products at great prices.",
-                    'phone' => '+96279' . rand(1000000, 9999999),
+                    'phone' => '+96279'.rand(1000000, 9999999),
                     'address' => 'Amman, Jordan',
                     'city' => 'Amman',
                     'latitude' => $lat,
@@ -110,13 +138,13 @@ class MarketplaceSeeder extends Seeder
                 $subcategory = $subcategories->random();
 
                 $product = Product::updateOrCreate(
-                    ['slug' => Str::slug($store->slug . '-product-' . $p)],
+                    ['slug' => Str::slug($store->slug.'-product-'.$p)],
                     [
                         'seller_id' => $seller->id,
                         'store_id' => $store->id,
                         'category_id' => $subcategory->id,
-                        'name' => $storeName . ' Item ' . $p,
-                        'description' => 'A high-quality product from ' . $storeName . '. Crafted with care and attention to detail.',
+                        'name' => $storeName.' Item '.$p,
+                        'description' => 'A high-quality product from '.$storeName.'. Crafted with care and attention to detail.',
                         'price' => $price,
                         'original_price' => $originalPrice,
                         'stock' => rand(5, 100),
