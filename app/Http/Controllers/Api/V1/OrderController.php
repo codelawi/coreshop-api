@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderCollection;
 use App\Http\Resources\OrderResource;
+use App\Mail\OrderCompletedMail;
 use App\Models\Order;
 use App\Services\ExpoPushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -45,15 +47,19 @@ class OrderController extends Controller
 
         $order->update(['status' => $request->status]);
 
-        $order->load(['client', 'store.seller']);
+        $order->load(['client', 'store.seller', 'items', 'address', 'coupon']);
 
         $this->notifyClient($order, $request->status);
         $this->notifySeller($order, $request->status);
 
+        if ($request->status === 'completed') {
+            $this->sendCompletionEmails($order);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Order status updated successfully',
-            'data' => new OrderResource($order->load(['client', 'coupon', 'items'])),
+            'data' => new OrderResource($order),
         ]);
     }
 
@@ -112,5 +118,19 @@ class OrderController extends Controller
             'order_id' => $order->id,
             'status' => $status,
         ]);
+    }
+
+    private function sendCompletionEmails(Order $order): void
+    {
+        if ($order->client?->email) {
+            Mail::to($order->client->email)
+                ->queue(new OrderCompletedMail($order, 'client'));
+        }
+
+        $seller = $order->store?->seller;
+        if ($seller?->email) {
+            Mail::to($seller->email)
+                ->queue(new OrderCompletedMail($order, 'seller'));
+        }
     }
 }

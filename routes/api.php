@@ -68,6 +68,8 @@ Route::prefix('v1')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/upload/avatar', [UploadController::class, 'avatar']);
 
+        Route::get('/client/fees', [AdminSettingController::class, 'payment']);
+
         Route::get('/client/coupons/check', [ClientCouponController::class, 'check']);
 
         Route::post('/client/orders', [ClientOrderController::class, 'store']);
