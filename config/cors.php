@@ -7,7 +7,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
-        'http://localhost:5173',
+        'https://dashboard.coreshop.io',
     ],
 
     'allowed_origins_patterns' => [],
