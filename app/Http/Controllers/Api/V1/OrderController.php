@@ -29,7 +29,7 @@ class OrderController extends Controller
 
     public function show(Order $order): JsonResponse
     {
-        $order->load(['client', 'coupon', 'items.product']);
+        $order->load(['client', 'coupon', 'items.product', 'store', 'address', 'driver']);
 
         return response()->json([
             'success' => true,

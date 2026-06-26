@@ -55,6 +55,59 @@ class StoreController extends Controller
         ]);
     }
 
+    public function store(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'seller_id' => ['required', 'exists:users,id'],
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'address' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $slug = Str::slug($data['name']);
+        if (Store::where('slug', $slug)->exists()) {
+            $slug .= '-'.Str::random(4);
+        }
+
+        $store = Store::create([
+            'seller_id' => $data['seller_id'],
+            'name' => $data['name'],
+            'slug' => $slug,
+            'description' => $data['description'] ?? null,
+            'phone' => $data['phone'] ?? null,
+            'city' => $data['city'] ?? null,
+            'address' => $data['address'] ?? null,
+            'status' => 'pending',
+        ]);
+
+        $store->load('seller');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Store created.',
+            'data' => [
+                'id' => $store->id,
+                'name' => $store->name,
+                'slug' => $store->slug,
+                'city' => $store->city,
+                'status' => $store->status,
+                'is_open' => $store->is_open,
+                'rating' => null,
+                'sales_count' => 0,
+                'products_count' => 0,
+                'orders_count' => 0,
+                'seller' => $store->seller ? [
+                    'id' => $store->seller->id,
+                    'name' => $store->seller->name,
+                    'email' => $store->seller->email,
+                ] : null,
+                'created_at' => $store->created_at->toDateString(),
+            ],
+        ], 201);
+    }
+
     public function show(Store $store): JsonResponse
     {
         $store->load('seller');

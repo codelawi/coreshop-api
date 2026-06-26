@@ -125,6 +125,7 @@ Route::prefix('v1')->group(function () {
 
         // Products
         Route::get('/products', [ProductController::class, 'index']);
+        Route::get('/products/{product}', [ProductController::class, 'show']);
         Route::patch('/products/{product}/status', [ProductController::class, 'updateStatus']);
 
         // Users
@@ -152,9 +153,12 @@ Route::prefix('v1')->group(function () {
 
         // Categories
         Route::get('/admin/categories', [AdminCategoryController::class, 'index']);
+        Route::post('/admin/categories', [AdminCategoryController::class, 'store']);
         Route::put('/admin/categories/{category}', [AdminCategoryController::class, 'update']);
+        Route::delete('/admin/categories/{category}', [AdminCategoryController::class, 'destroy']);
 
         // Stores (admin)
+        Route::post('/stores', [AdminStoreController::class, 'store']);
         Route::get('/stores', [AdminStoreController::class, 'index']);
         Route::get('/stores/{store}', [AdminStoreController::class, 'show']);
         Route::get('/stores/{store}/orders', [AdminStoreController::class, 'orders']);

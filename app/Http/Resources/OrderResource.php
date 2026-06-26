@@ -29,8 +29,40 @@ class OrderResource extends JsonResource
             'payment_method' => $this->payment_method,
             'payment_status' => $this->payment_status,
             'notes' => $this->notes,
-            'items_count' => $this->items->count(),
+            'items_count' => $this->whenLoaded('items', fn () => $this->items->count(), $this->items_count ?? 0),
             'created_at' => $this->created_at->toDateString(),
+            'store' => $this->whenLoaded('store', fn () => $this->store ? [
+                'id' => $this->store->id,
+                'name' => $this->store->name,
+                'city' => $this->store->city,
+                'phone' => $this->store->phone,
+            ] : null),
+            'address' => $this->whenLoaded('address', fn () => $this->address ? [
+                'label' => $this->address->label,
+                'recipient_name' => $this->address->recipient_name,
+                'phone' => $this->address->phone,
+                'address_line' => $this->address->address_line,
+                'city' => $this->address->city,
+                'building' => $this->address->building,
+                'floor' => $this->address->floor,
+                'apartment' => $this->address->apartment,
+                'notes' => $this->address->notes,
+            ] : null),
+            'driver' => $this->whenLoaded('driver', fn () => $this->driver ? [
+                'id' => $this->driver->id,
+                'name' => $this->driver->name,
+                'phone' => $this->driver->phone,
+            ] : null),
+            'items' => $this->whenLoaded('items', fn () => $this->items->map(fn ($item) => [
+                'id' => $item->id,
+                'product_name' => $item->product_name,
+                'product_image' => $item->product_image,
+                'variant_label' => $item->variant_label,
+                'quantity' => $item->quantity,
+                'unit_price' => $item->unit_price,
+                'total' => $item->total,
+                'weight_grams' => $item->product?->weight_grams,
+            ])),
         ];
     }
 }
