@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
 use App\Http\Controllers\Api\V1\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
@@ -49,6 +50,7 @@ Route::prefix('v1')->group(function () {
             Route::patch('/push-token', [AuthController::class, 'savePushToken']);
             Route::patch('/profile', [AuthController::class, 'updateProfile']);
             Route::patch('/change-password', [AuthController::class, 'changePassword']);
+            Route::delete('/account', [AuthController::class, 'deleteAccount']);
         });
     });
 
@@ -60,6 +62,7 @@ Route::prefix('v1')->group(function () {
     Route::get('/client/products/{product}', [ClientProductController::class, 'show']);
     Route::get('/stores', [ClientStoreController::class, 'index']);
     Route::get('/stores/{store}', [ClientStoreController::class, 'show']);
+    Route::get('/client/stores/{store}', [ClientStoreController::class, 'show']);
 
     // Authenticated client routes
     Route::middleware('auth:sanctum')->group(function () {
@@ -70,6 +73,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/client/orders', [ClientOrderController::class, 'store']);
         Route::get('/client/orders', [ClientOrderController::class, 'index']);
         Route::get('/client/orders/{order}', [ClientOrderController::class, 'show']);
+        Route::post('/client/orders/{order}/cancel', [ClientOrderController::class, 'cancel']);
         Route::get('/client/orders/{order}/review', [ClientReviewController::class, 'show']);
         Route::post('/client/orders/{order}/review', [ClientReviewController::class, 'store']);
 
@@ -155,7 +159,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/stores/{store}', [AdminStoreController::class, 'show']);
         Route::get('/stores/{store}/orders', [AdminStoreController::class, 'orders']);
         Route::get('/stores/{store}/products', [AdminStoreController::class, 'products']);
+        Route::post('/stores/{store}/products', [AdminStoreController::class, 'createProduct']);
         Route::patch('/stores/{store}/status', [AdminStoreController::class, 'updateStatus']);
+
+        // Settings
+        Route::get('/settings/payment', [AdminSettingController::class, 'payment']);
+        Route::patch('/settings/payment', [AdminSettingController::class, 'updatePayment']);
 
         // Analytics
         Route::prefix('analytics')->group(function () {

@@ -432,6 +432,31 @@ class AuthController extends Controller
         ]);
     }
 
+    public function deleteAccount(Request $request): JsonResponse
+    {
+        $request->validate([
+            'password' => ['required', 'string'],
+        ]);
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        if (! Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Incorrect password.',
+            ], 422);
+        }
+
+        $user->tokens()->delete();
+        $user->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Account deleted successfully.',
+        ]);
+    }
+
     public function logout(): JsonResponse
     {
         Auth::user()->currentAccessToken()->delete();

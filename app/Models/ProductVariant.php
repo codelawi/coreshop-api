@@ -11,6 +11,7 @@ class ProductVariant extends Model
         'size',
         'color',
         'color_hex',
+        'description',
         'image_url',
         'sku',
         'price_adjustment',

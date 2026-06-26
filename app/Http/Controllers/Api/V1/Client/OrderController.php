@@ -19,6 +19,7 @@ class OrderController extends Controller
         $data = $request->validate([
             'address_id' => ['required', 'integer'],
             'coupon_code' => ['nullable', 'string'],
+            'payment_method' => ['nullable', 'string', 'in:cash_on_delivery,cliq'],
             'notes' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
@@ -56,6 +57,36 @@ class OrderController extends Controller
         return response()->json([
             'success' => true,
             'data' => new ClientOrderResource($order),
+        ]);
+    }
+
+    public function cancel(Request $request, Order $order): JsonResponse
+    {
+        abort_unless($order->client_id === Auth::id(), 403);
+
+        $nonCancellableStatuses = ['delivered', 'completed', 'cancelled', 'refunded'];
+
+        if (in_array($order->status, $nonCancellableStatuses)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This order cannot be cancelled.',
+            ], 422);
+        }
+
+        $cancellationFee = $order->status !== 'pending' ? 2.00 : 0.00;
+
+        $order->update([
+            'status' => 'cancelled',
+            'cancellation_reason' => $request->reason ?? 'Cancelled by customer',
+            'cancelled_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Order cancelled.',
+            'data' => [
+                'cancellation_fee' => $cancellationFee,
+            ],
         ]);
     }
 }

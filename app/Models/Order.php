@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Order extends Model
 {
@@ -20,6 +20,7 @@ class Order extends Model
         'subtotal',
         'discount',
         'delivery_fee',
+        'platform_fee',
         'distance_km',
         'total',
         'payment_method',
@@ -41,6 +42,7 @@ class Order extends Model
             'subtotal' => 'decimal:2',
             'discount' => 'decimal:2',
             'delivery_fee' => 'decimal:2',
+            'platform_fee' => 'decimal:2',
             'distance_km' => 'decimal:2',
             'total' => 'decimal:2',
             'delivery_latitude' => 'decimal:7',

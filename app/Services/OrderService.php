@@ -7,6 +7,7 @@ use App\Models\Coupon;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Setting;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -20,7 +21,8 @@ class OrderService
      *   address_id: int,
      *   items: array<array{product_id: int, variant_id: int|null, quantity: int}>,
      *   coupon_code?: string|null,
-     *   notes?: string|null
+     *   notes?: string|null,
+     *   payment_method?: string|null
      * } $data
      */
     public function place(int $clientId, array $data): Order
@@ -111,13 +113,18 @@ class OrderService
                 $coupon->increment('used_count');
             }
 
+            $feePerKm = (float) Setting::get('delivery_fee_per_km', 0.3);
+            $feeMinimum = (float) Setting::get('delivery_fee_minimum', 1.0);
+            $platformFeePercent = (float) Setting::get('platform_fee_percentage', 10);
+
             $distanceKm = $this->haversine(
                 (float) $store->latitude,
                 (float) $store->longitude,
                 (float) $address->latitude,
                 (float) $address->longitude,
             );
-            $deliveryFee = round(max(1.0, 1.0 + $distanceKm * 0.3), 2);
+            $deliveryFee = round(max($feeMinimum, $feeMinimum + $distanceKm * $feePerKm), 2);
+            $platformFee = round(($subtotal - $discount) * ($platformFeePercent / 100), 2);
             $total = round($subtotal - $discount + $deliveryFee, 2);
 
             $order = Order::create([
@@ -129,9 +136,10 @@ class OrderService
                 'subtotal' => $subtotal,
                 'discount' => $discount,
                 'delivery_fee' => $deliveryFee,
+                'platform_fee' => $platformFee,
                 'distance_km' => round($distanceKm, 2),
                 'total' => $total,
-                'payment_method' => 'cash_on_delivery',
+                'payment_method' => $data['payment_method'] ?? 'cash_on_delivery',
                 'payment_status' => 'unpaid',
                 'notes' => $data['notes'] ?? null,
                 'delivery_latitude' => $address->latitude,

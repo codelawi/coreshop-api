@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\SellerProductResource;
 use App\Models\Order;
+use App\Models\Product;
+use App\Models\ProductImage;
+use App\Models\ProductVariant;
 use App\Models\Store;
 use App\Services\ExpoPushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class StoreController extends Controller
 {
@@ -35,11 +40,11 @@ class StoreController extends Controller
                 'sales_count' => $store->sales_count,
                 'products_count' => $store->products_count,
                 'orders_count' => $store->orders_count,
-                'seller' => [
+                'seller' => $store->seller ? [
                     'id' => $store->seller->id,
                     'name' => $store->seller->name,
                     'email' => $store->seller->email,
-                ],
+                ] : null,
                 'created_at' => $store->created_at->toDateString(),
             ]),
             'meta' => [
@@ -72,11 +77,11 @@ class StoreController extends Controller
                 'reviews_count' => $store->reviews_count,
                 'sales_count' => $store->sales_count,
                 'delivery_radius_km' => $store->delivery_radius_km,
-                'seller' => [
+                'seller' => $store->seller ? [
                     'id' => $store->seller->id,
                     'name' => $store->seller->name,
                     'email' => $store->seller->email,
-                ],
+                ] : null,
                 'products_count' => $store->products()->count(),
                 'orders_count' => $store->orders()->count(),
                 'total_revenue' => $store->orders()->whereIn('status', ['delivered', 'completed'])->sum('total'),
@@ -166,5 +171,82 @@ class StoreController extends Controller
             'success' => true,
             'message' => 'Store status updated.',
         ]);
+    }
+
+    public function createProduct(Request $request, Store $store): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
+            'category_id' => ['required', 'exists:categories,id'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'original_price' => ['nullable', 'numeric', 'min:0'],
+            'stock' => ['required', 'integer', 'min:0'],
+            'weight_grams' => ['nullable', 'integer', 'min:0'],
+            'images' => ['nullable', 'array', 'max:7'],
+            'images.*' => ['string', 'max:500'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.size' => ['nullable', 'string', 'max:50'],
+            'variants.*.color' => ['nullable', 'string', 'max:50'],
+            'variants.*.color_hex' => ['nullable', 'string', 'max:7'],
+            'variants.*.description' => ['nullable', 'string', 'max:255'],
+            'variants.*.sku' => ['nullable', 'string', 'max:100'],
+            'variants.*.price_adjustment' => ['nullable', 'numeric'],
+            'variants.*.stock' => ['required_with:variants', 'integer', 'min:0'],
+        ]);
+
+        $product = DB::transaction(function () use ($data, $store) {
+            $slug = Str::slug($data['name']);
+            if (Product::where('slug', $slug)->exists()) {
+                $slug .= '-'.Str::random(4);
+            }
+
+            $product = Product::create([
+                'seller_id' => $store->seller_id,
+                'store_id' => $store->id,
+                'category_id' => $data['category_id'],
+                'name' => $data['name'],
+                'slug' => $slug,
+                'description' => $data['description'] ?? null,
+                'price' => $data['price'],
+                'original_price' => $data['original_price'] ?? null,
+                'stock' => $data['stock'],
+                'weight_grams' => $data['weight_grams'] ?? null,
+                'status' => 'approved',
+            ]);
+
+            foreach ($data['images'] ?? [] as $i => $url) {
+                ProductImage::create([
+                    'product_id' => $product->id,
+                    'url' => $url,
+                    'sort_order' => $i,
+                    'is_primary' => $i === 0,
+                ]);
+            }
+
+            foreach ($data['variants'] ?? [] as $variant) {
+                ProductVariant::create([
+                    'product_id' => $product->id,
+                    'size' => $variant['size'] ?? null,
+                    'color' => $variant['color'] ?? null,
+                    'color_hex' => $variant['color_hex'] ?? null,
+                    'description' => $variant['description'] ?? null,
+                    'sku' => $variant['sku'] ?? null,
+                    'price_adjustment' => $variant['price_adjustment'] ?? 0,
+                    'stock' => $variant['stock'],
+                    'is_active' => true,
+                ]);
+            }
+
+            return $product;
+        });
+
+        $product->load(['category', 'productImages', 'variants']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Product created and approved.',
+            'data' => new SellerProductResource($product),
+        ], 201);
     }
 }
