@@ -61,8 +61,7 @@
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 70px; display: flex; align-items: center; background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.06); transition: box-shadow var(--ease); }
     .nav .wrap { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; }
-    .nav-logo-box { width: 36px; height: 36px; background: var(--brand); border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .nav-logo-box img { width: 28px; height: 28px; object-fit: contain; }
+    .nav-logo-box img { height: 38px; width: 38px; object-fit: contain; display: block; }
     .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
     .nav-links a { font-size: 14px; font-weight: 600; color: var(--secondary); transition: color var(--ease); }
     .nav-links a:hover { color: var(--brand); }
@@ -206,8 +205,8 @@
     footer { background: var(--brand); color: #fff; padding: 64px 0 32px; }
     .foot-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 56px; padding-bottom: 48px; border-bottom: 1px solid rgba(255,255,255,0.07); }
     .foot-logo { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; margin-bottom: 14px; }
-    .foot-logo-box { width: 36px; height: 36px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-    .foot-logo-box img { width: 28px; height: 28px; object-fit: contain; }
+    .foot-logo-box { width: 40px; height: 40px; background: #fff; border-radius: 10px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+    .foot-logo-box img { width: 34px; height: 34px; object-fit: contain; display: block; }
     .foot-desc { font-size: 14px; color: rgba(255,255,255,0.45); line-height: 1.75; max-width: 280px; }
     .foot-col-title { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px; }
     .foot-links { list-style: none; display: flex; flex-direction: column; gap: 9px; }
@@ -354,7 +353,7 @@
 <nav class="nav" id="nav">
     <div class="wrap">
         <a href="#" class="nav-logo">
-            <div class="nav-logo-box"><img src="/logo.png" alt="CoreShop"></div>
+            <img src="/logo.png" alt="CoreShop" class="nav-logo-box">
             CoreShop
         </a>
         <ul class="nav-links">
