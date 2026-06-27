@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Models\UserNotification;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -12,11 +13,22 @@ class ExpoPushService
 
     public function sendToUser(User $user, string $title, string $body, array $data = []): void
     {
-        if (empty($user->expo_push_token)) {
+        UserNotification::create([
+            'user_id' => $user->id,
+            'type' => $data['type'] ?? 'system',
+            'title' => $title,
+            'body' => $body,
+            'data' => $data ?: null,
+        ]);
+
+        /** @var string|null $token */
+        $token = $user->getAttribute('expo_push_token');
+
+        if (empty($token)) {
             return;
         }
 
-        $this->send($user->expo_push_token, $title, $body, $data);
+        $this->send($token, $title, $body, $data);
     }
 
     public function send(string $token, string $title, string $body, array $data = []): void
@@ -30,7 +42,7 @@ class ExpoPushService
                     'data' => $data,
                     'sound' => 'default',
                     'priority' => 'high',
-                    'channelId' => 'default',
+                    'channelId' => 'coreshop_alerts',
                 ]);
         } catch (\Throwable $e) {
             Log::warning('Expo push failed', ['token' => $token, 'error' => $e->getMessage()]);
@@ -55,7 +67,7 @@ class ExpoPushService
             'data' => $data,
             'sound' => 'default',
             'priority' => 'high',
-            'channelId' => 'default',
+            'channelId' => 'coreshop_alerts',
         ], array_values($tokens));
 
         try {

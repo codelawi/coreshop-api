@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressController;
+use App\Http\Controllers\Api\V1\Client\NotificationController as ClientNotificationController;
 use App\Http\Controllers\Api\V1\Client\CategoryController as ClientCategoryController;
 use App\Http\Controllers\Api\V1\Client\ConversationController as ClientConversationController;
 use App\Http\Controllers\Api\V1\Client\CouponController as ClientCouponController;
@@ -91,6 +92,11 @@ Route::prefix('v1')->group(function () {
         Route::put('/addresses/{address}', [ClientAddressController::class, 'update']);
         Route::delete('/addresses/{address}', [ClientAddressController::class, 'destroy']);
         Route::patch('/addresses/{address}/default', [ClientAddressController::class, 'setDefault']);
+
+        Route::get('/client/notifications', [ClientNotificationController::class, 'index']);
+        Route::get('/client/notifications/unread-count', [ClientNotificationController::class, 'unreadCount']);
+        Route::patch('/client/notifications/read-all', [ClientNotificationController::class, 'markAllRead']);
+        Route::patch('/client/notifications/{id}', [ClientNotificationController::class, 'markRead']);
 
         Route::get('/client/conversations', [ClientConversationController::class, 'index']);
         Route::post('/client/conversations', [ClientConversationController::class, 'store']);
