@@ -33,6 +33,8 @@ class AddressController extends Controller
                 Address::where('user_id', Auth::id())->update(['is_default' => false]);
             }
             $data['user_id'] = Auth::id();
+            $data['label'] = $data['label'] ?? 'Home';
+            $data['address_line'] = $data['address_line'] ?? '';
 
             // First address auto-default
             if (Address::where('user_id', Auth::id())->count() === 0) {
@@ -67,6 +69,8 @@ class AddressController extends Controller
                     ->where('id', '!=', $address->id)
                     ->update(['is_default' => false]);
             }
+            $data['label'] = $data['label'] ?? 'Home';
+            $data['address_line'] = $data['address_line'] ?? '';
             $address->update($data);
         });
 
@@ -111,10 +115,10 @@ class AddressController extends Controller
     private function validateData(Request $request): array
     {
         return $request->validate([
-            'label' => ['required', 'string', 'max:50'],
+            'label' => ['nullable', 'string', 'max:50'],
             'recipient_name' => ['required', 'string', 'max:100'],
             'phone' => ['required', 'string', 'max:20'],
-            'address_line' => ['required', 'string', 'max:255'],
+            'address_line' => ['nullable', 'string', 'max:255'],
             'building' => ['nullable', 'string', 'max:50'],
             'floor' => ['nullable', 'string', 'max:50'],
             'apartment' => ['nullable', 'string', 'max:50'],
