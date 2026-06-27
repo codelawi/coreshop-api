@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressController;
 use App\Http\Controllers\Api\V1\Client\CategoryController as ClientCategoryController;
+use App\Http\Controllers\Api\V1\Client\ConversationController as ClientConversationController;
 use App\Http\Controllers\Api\V1\Client\CouponController as ClientCouponController;
 use App\Http\Controllers\Api\V1\Client\HomeController as ClientHomeController;
 use App\Http\Controllers\Api\V1\Client\OrderController as ClientOrderController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\Seller\AnalyticsController as SellerAnalyticsController;
+use App\Http\Controllers\Api\V1\Seller\ConversationController as SellerConversationController;
 use App\Http\Controllers\Api\V1\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Api\V1\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Api\V1\Seller\StoreController as SellerStoreController;
@@ -89,6 +91,11 @@ Route::prefix('v1')->group(function () {
         Route::put('/addresses/{address}', [ClientAddressController::class, 'update']);
         Route::delete('/addresses/{address}', [ClientAddressController::class, 'destroy']);
         Route::patch('/addresses/{address}/default', [ClientAddressController::class, 'setDefault']);
+
+        Route::get('/client/conversations', [ClientConversationController::class, 'index']);
+        Route::post('/client/conversations', [ClientConversationController::class, 'store']);
+        Route::get('/client/conversations/{conversation}/messages', [ClientConversationController::class, 'messages']);
+        Route::post('/client/conversations/{conversation}/messages', [ClientConversationController::class, 'sendMessage']);
     });
 
     // Seller only routes
@@ -115,6 +122,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/revenue', [SellerAnalyticsController::class, 'revenue']);
             Route::get('/top-products', [SellerAnalyticsController::class, 'topProducts']);
         });
+
+        Route::get('/conversations', [SellerConversationController::class, 'index']);
+        Route::get('/conversations/{conversation}/messages', [SellerConversationController::class, 'messages']);
+        Route::post('/conversations/{conversation}/messages', [SellerConversationController::class, 'sendMessage']);
     });
 
     // Admin only routes
