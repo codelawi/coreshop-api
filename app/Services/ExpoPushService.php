@@ -42,7 +42,7 @@ class ExpoPushService
                     'data' => $data,
                     'sound' => 'default',
                     'priority' => 'high',
-                    'channelId' => 'coreshop_alerts',
+                    'channelId' => 'coreshop_v2',
                 ]);
         } catch (\Throwable $e) {
             Log::warning('Expo push failed', ['token' => $token, 'error' => $e->getMessage()]);
@@ -67,7 +67,7 @@ class ExpoPushService
             'data' => $data,
             'sound' => 'default',
             'priority' => 'high',
-            'channelId' => 'coreshop_alerts',
+            'channelId' => 'coreshop_v2',
         ], array_values($tokens));
 
         try {
