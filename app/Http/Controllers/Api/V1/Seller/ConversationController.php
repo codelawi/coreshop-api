@@ -6,12 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Models\Conversation;
+use App\Models\Order;
+use App\Models\Product;
+use App\Services\ExpoPushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ConversationController extends Controller
 {
+    public function __construct(private readonly ExpoPushService $push) {}
+
     public function index(): JsonResponse
     {
         $store = Auth::user()->store;
@@ -31,7 +36,7 @@ class ConversationController extends Controller
         ]);
     }
 
-    public function messages(Request $request, Conversation $conversation): JsonResponse
+    public function messages(Conversation $conversation): JsonResponse
     {
         $this->authorizeConversation($conversation);
 
@@ -56,17 +61,36 @@ class ConversationController extends Controller
         $this->authorizeConversation($conversation);
 
         $data = $request->validate([
-            'body' => ['required', 'string', 'max:1000'],
+            'body' => ['nullable', 'string', 'max:1000'],
+            'type' => ['sometimes', 'string', 'in:text,product,order'],
+            'reference_id' => ['nullable', 'integer'],
         ]);
+
+        $type = $data['type'] ?? 'text';
+        $referenceData = $this->buildReferenceData($type, $data['reference_id'] ?? null);
 
         $message = $conversation->messages()->create([
             'sender_id' => Auth::id(),
-            'body' => $data['body'],
+            'body' => $data['body'] ?? '',
+            'type' => $type,
+            'reference_id' => $data['reference_id'] ?? null,
+            'reference_data' => $referenceData,
         ]);
 
         $conversation->update(['last_message_at' => now()]);
-
         $message->load('sender');
+
+        $storeName = $conversation->store->name;
+        $notifBody = $type === 'text'
+            ? ($data['body'] ?? '')
+            : "Shared a {$type}";
+
+        $this->push->sendToUser($conversation->client, $storeName, $notifBody, [
+            'type' => 'new_message',
+            'conversation_id' => $conversation->id,
+            'role' => 'client',
+            'store_name' => $storeName,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -79,5 +103,45 @@ class ConversationController extends Controller
         $store = Auth::user()->store;
 
         abort_unless($store && $conversation->store_id === $store->id, 403, 'Unauthorized.');
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function buildReferenceData(string $type, ?int $referenceId): ?array
+    {
+        if (! $referenceId) {
+            return null;
+        }
+
+        if ($type === 'product') {
+            $product = Product::with('productImages')->find($referenceId);
+            if (! $product) {
+                return null;
+            }
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => (float) $product->price,
+                'image' => $product->productImages->first()?->url ?? ($product->images[0] ?? null),
+            ];
+        }
+
+        if ($type === 'order') {
+            $order = Order::find($referenceId);
+            if (! $order) {
+                return null;
+            }
+
+            return [
+                'id' => $order->id,
+                'status' => $order->status,
+                'total' => (float) $order->total,
+                'created_at' => $order->created_at->toISOString(),
+            ];
+        }
+
+        return null;
     }
 }

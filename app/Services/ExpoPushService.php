@@ -29,6 +29,8 @@ class ExpoPushService
                     'body' => $body,
                     'data' => $data,
                     'sound' => 'default',
+                    'priority' => 'high',
+                    'channelId' => 'default',
                 ]);
         } catch (\Throwable $e) {
             Log::warning('Expo push failed', ['token' => $token, 'error' => $e->getMessage()]);
@@ -52,6 +54,8 @@ class ExpoPushService
             'body' => $body,
             'data' => $data,
             'sound' => 'default',
+            'priority' => 'high',
+            'channelId' => 'default',
         ], array_values($tokens));
 
         try {

@@ -11,11 +11,15 @@ class Message extends Model
         'conversation_id',
         'sender_id',
         'body',
+        'type',
+        'reference_id',
+        'reference_data',
         'read_at',
     ];
 
     protected $casts = [
         'read_at' => 'datetime',
+        'reference_data' => 'array',
     ];
 
     public function conversation(): BelongsTo
