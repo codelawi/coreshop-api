@@ -61,7 +61,7 @@
     .nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; height: 70px; display: flex; align-items: center; background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(0,0,0,0.06); transition: box-shadow var(--ease); }
     .nav .wrap { display: flex; align-items: center; justify-content: space-between; width: 100%; }
     .nav-logo { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 800; letter-spacing: -0.02em; }
-    .nav-logo-box img { height: 38px; width: 38px; object-fit: contain; display: block; }
+    .nav-logo-box { height: 36px; width: 36px; object-fit: contain; display: block; }
     .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
     .nav-links a { font-size: 14px; font-weight: 600; color: var(--secondary); transition: color var(--ease); }
     .nav-links a:hover { color: var(--brand); }
