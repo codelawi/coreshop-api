@@ -378,7 +378,7 @@
 
 <div class="mobile-nav" id="mob-nav">
     <a href="#about" onclick="toggleNav()"><span class="e">About</span><span class="a" style="display:none">من نحن</span></a>
-    <a href="#how" onclick="toggleNav()"><span class="e">How It Works</span><span class="a" style="display:none">كيف يعمل</span></a>
+    <a href="#how" onclick="toggleNav()"><span class="e">How It Works</span><span class="a" style="display:none">كيف يعمل </span></a>
     <a href="#features" onclick="toggleNav()"><span class="e">Features</span><span class="a" style="display:none">المميزات</span></a>
     <a href="#sellers" onclick="toggleNav()"><span class="e">For Sellers</span><span class="a" style="display:none">للبائعين</span></a>
     <a href="#clients" onclick="toggleNav()"><span class="e">For Clients</span><span class="a" style="display:none">للعملاء</span></a>
