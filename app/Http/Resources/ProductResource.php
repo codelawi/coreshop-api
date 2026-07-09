@@ -18,15 +18,15 @@ class ProductResource extends JsonResource
             'stock' => $this->stock,
             'images' => $this->images,
             'status' => $this->status,
-            'category' => [
+            'category' => $this->category ? [
                 'id' => $this->category->id,
                 'name' => $this->category->name,
-            ],
-            'seller' => [
+            ] : null,
+            'seller' => $this->seller ? [
                 'id' => $this->seller->id,
                 'name' => $this->seller->name,
                 'email' => $this->seller->email,
-            ],
+            ] : null,
             'created_at' => $this->created_at->toDateString(),
         ];
     }
