@@ -2,17 +2,18 @@
 
 use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
 use App\Http\Controllers\Api\V1\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressController;
-use App\Http\Controllers\Api\V1\Client\NotificationController as ClientNotificationController;
 use App\Http\Controllers\Api\V1\Client\CategoryController as ClientCategoryController;
 use App\Http\Controllers\Api\V1\Client\ConversationController as ClientConversationController;
 use App\Http\Controllers\Api\V1\Client\CouponController as ClientCouponController;
 use App\Http\Controllers\Api\V1\Client\HomeController as ClientHomeController;
+use App\Http\Controllers\Api\V1\Client\NotificationController as ClientNotificationController;
 use App\Http\Controllers\Api\V1\Client\OrderController as ClientOrderController;
 use App\Http\Controllers\Api\V1\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Api\V1\Client\ReviewController as ClientReviewController;
@@ -184,6 +185,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/stores/{store}/products', [AdminStoreController::class, 'products']);
         Route::post('/stores/{store}/products', [AdminStoreController::class, 'createProduct']);
         Route::patch('/stores/{store}/status', [AdminStoreController::class, 'updateStatus']);
+
+        // Reviews (admin moderation)
+        Route::get('/admin/reviews', [AdminReviewController::class, 'index']);
+        Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy']);
 
         // Settings
         Route::get('/settings/payment', [AdminSettingController::class, 'payment']);
