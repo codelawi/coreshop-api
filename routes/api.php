@@ -200,7 +200,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/admin/notifications/send', [AdminNotificationController::class, 'send']);
 
         // Broadcasting auth
-        Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
+        Route::post('/broadcasting/auth', fn () => Broadcast::auth(request()));
 
         // Dashboard notifications (real-time)
         Route::get('/admin/dashboard-notifications', [DashboardNotificationController::class, 'index']);
