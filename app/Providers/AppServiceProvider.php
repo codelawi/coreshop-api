@@ -11,7 +11,6 @@ use App\Observers\UserObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -33,8 +32,6 @@ class AppServiceProvider extends ServiceProvider
         Order::observe(OrderObserver::class);
         Product::observe(ProductObserver::class);
         User::observe(UserObserver::class);
-
-        Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
         RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by(
             $request->input('email').'|'.$request->ip()
