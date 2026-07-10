@@ -15,7 +15,7 @@ class UploadController extends Controller
     {
         $request->validate([
             'image' => ['required', 'file', 'max:20480', 'mimes:jpeg,png,webp,jpg,heic,heif'],
-            'folder' => ['sometimes', 'in:banners,categories'],
+            'folder' => ['sometimes', 'in:banners,categories,avatars'],
         ]);
 
         $folder = $request->input('folder', 'banners');

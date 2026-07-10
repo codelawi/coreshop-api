@@ -13,22 +13,24 @@ class AnalyticsController extends Controller
 {
     public function overview(): JsonResponse
     {
+        $completedOrders = Order::whereIn('status', ['delivered', 'completed']);
+
         return response()->json([
             'success' => true,
             'data' => [
-                'total_revenue' => Order::where('payment_status', 'paid')->sum('total'),
+                'total_revenue' => (clone $completedOrders)->sum('total'),
                 'total_orders' => Order::count(),
                 'total_users' => User::where('role', '!=', 'admin')->count(),
                 'total_products' => Product::where('status', 'approved')->count(),
                 'pending_orders' => Order::where('status', 'pending')->count(),
-                'avg_order_value' => Order::where('payment_status', 'paid')->avg('total'),
+                'avg_order_value' => (clone $completedOrders)->avg('total'),
             ],
         ]);
     }
 
     public function revenue(): JsonResponse
     {
-        $revenue = Order::where('payment_status', 'paid')
+        $revenue = Order::whereIn('status', ['delivered', 'completed'])
             ->selectRaw('MONTH(created_at) as month, SUM(total) as total')
             ->whereYear('created_at', now()->year)
             ->groupBy('month')
@@ -104,12 +106,16 @@ class AnalyticsController extends Controller
             ->selectSub(
                 OrderItem::selectRaw('COALESCE(SUM(order_items.total), 0)')
                     ->join('products', 'order_items.product_id', '=', 'products.id')
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->whereIn('orders.status', ['delivered', 'completed'])
                     ->whereColumn('products.seller_id', 'users.id'),
                 'revenue'
             )
             ->selectSub(
                 OrderItem::selectRaw('COUNT(DISTINCT order_items.order_id)')
                     ->join('products', 'order_items.product_id', '=', 'products.id')
+                    ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                    ->whereIn('orders.status', ['delivered', 'completed'])
                     ->whereColumn('products.seller_id', 'users.id'),
                 'orders_count'
             )
