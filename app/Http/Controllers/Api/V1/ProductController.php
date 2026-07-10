@@ -13,7 +13,7 @@ class ProductController extends Controller
 {
     public function index(Request $request): AnonymousResourceCollection
     {
-        $products = Product::with(['seller', 'category'])
+        $products = Product::with(['seller', 'category', 'store'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
             ->latest()

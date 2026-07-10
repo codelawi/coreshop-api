@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
@@ -150,8 +151,11 @@ Route::prefix('v1')->group(function () {
 
         // Users
         Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{user}', [UserController::class, 'show']);
         Route::patch('/users/{user}', [UserController::class, 'update']);
         Route::patch('/users/{user}/status', [UserController::class, 'updateStatus']);
+        Route::patch('/users/{user}/password', [UserController::class, 'changePassword']);
+        Route::patch('/users/{user}/email-verify', [UserController::class, 'toggleEmailVerification']);
         Route::delete('/users/{user}', [UserController::class, 'destroy']);
 
         // Coupons
@@ -189,6 +193,9 @@ Route::prefix('v1')->group(function () {
         // Reviews (admin moderation)
         Route::get('/admin/reviews', [AdminReviewController::class, 'index']);
         Route::delete('/admin/reviews/{review}', [AdminReviewController::class, 'destroy']);
+
+        // Notifications (admin broadcast)
+        Route::post('/admin/notifications/send', [AdminNotificationController::class, 'send']);
 
         // Settings
         Route::get('/settings/payment', [AdminSettingController::class, 'payment']);

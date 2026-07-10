@@ -14,16 +14,18 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'phone' => $this->phone,
+            'city' => $this->city,
             'avatar' => $this->avatar,
             'role' => $this->role,
             'status' => $this->status,
+            'email_verified_at' => $this->email_verified_at?->toIso8601String(),
             'store' => $this->whenLoaded('store', fn () => $this->store ? [
                 'id' => $this->store->id,
                 'name' => $this->store->name,
                 'status' => $this->store->status,
                 'logo' => $this->store->logo,
             ] : null),
-            'created_at' => $this->created_at->toDateString(),
+            'created_at' => $this->created_at->format('Y-m-d H:i'),
         ];
     }
 }

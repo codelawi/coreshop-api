@@ -27,7 +27,11 @@ class ProductResource extends JsonResource
                 'name' => $this->seller->name,
                 'email' => $this->seller->email,
             ] : null,
-            'created_at' => $this->created_at->toDateString(),
+            'store' => $this->whenLoaded('store', fn () => $this->store ? [
+                'id' => $this->store->id,
+                'name' => $this->store->name,
+            ] : null),
+            'created_at' => $this->created_at->format('Y-m-d H:i'),
         ];
     }
 }

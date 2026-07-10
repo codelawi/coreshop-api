@@ -18,7 +18,7 @@ class OrderController extends Controller
 
     public function index(Request $request): OrderCollection
     {
-        $orders = Order::with(['client', 'coupon', 'items'])
+        $orders = Order::with(['client', 'coupon', 'items', 'store.seller'])
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->search, fn ($q) => $q->whereHas('client', fn ($q) => $q->where('name', 'like', "%{$request->search}%")
                 ->orWhere('email', 'like', "%{$request->search}%")

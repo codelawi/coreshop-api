@@ -10,6 +10,7 @@ use App\Services\ExpoPushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -33,6 +34,47 @@ class UserController extends Controller
                 'per_page' => $users->perPage(),
                 'last_page' => $users->lastPage(),
             ],
+        ]);
+    }
+
+    public function show(User $user): JsonResponse
+    {
+        $user->load('store');
+
+        return response()->json([
+            'success' => true,
+            'data' => new UserResource($user),
+        ]);
+    }
+
+    public function changePassword(Request $request, User $user): JsonResponse
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user->update(['password' => Hash::make($request->password)]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password updated successfully.',
+        ]);
+    }
+
+    public function toggleEmailVerification(User $user): JsonResponse
+    {
+        if ($user->hasVerifiedEmail()) {
+            $user->update(['email_verified_at' => null]);
+            $message = 'Email unverified.';
+        } else {
+            $user->markEmailAsVerified();
+            $message = 'Email verified.';
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => new UserResource($user->load('store')),
         ]);
     }
 
@@ -76,6 +118,9 @@ class UserController extends Controller
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'email', 'unique:users,email,'.$user->id],
             'role' => ['sometimes', 'in:seller,client,driver'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'avatar' => ['sometimes', 'nullable', 'string'],
         ]);
 
         $user->update($data);

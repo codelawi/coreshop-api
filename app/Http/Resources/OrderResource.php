@@ -30,12 +30,17 @@ class OrderResource extends JsonResource
             'payment_status' => $this->payment_status,
             'notes' => $this->notes,
             'items_count' => $this->whenLoaded('items', fn () => $this->items->count(), $this->items_count ?? 0),
-            'created_at' => $this->created_at->toDateString(),
+            'created_at' => $this->created_at->format('Y-m-d H:i'),
             'store' => $this->whenLoaded('store', fn () => $this->store ? [
                 'id' => $this->store->id,
                 'name' => $this->store->name,
                 'city' => $this->store->city,
                 'phone' => $this->store->phone,
+            ] : null),
+            'seller' => $this->whenLoaded('store', fn () => $this->store?->seller ? [
+                'id' => $this->store->seller->id,
+                'name' => $this->store->seller->name,
+                'email' => $this->store->seller->email,
             ] : null),
             'address' => $this->whenLoaded('address', fn () => $this->address ? [
                 'label' => $this->address->label,
