@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Api\V1\Admin\DashboardNotificationController;
 use App\Http\Controllers\Api\V1\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
@@ -196,6 +197,13 @@ Route::prefix('v1')->group(function () {
 
         // Notifications (admin broadcast)
         Route::post('/admin/notifications/send', [AdminNotificationController::class, 'send']);
+
+        // Dashboard notifications (real-time)
+        Route::get('/admin/dashboard-notifications', [DashboardNotificationController::class, 'index']);
+        Route::post('/admin/dashboard-notifications/read-all', [DashboardNotificationController::class, 'markAllRead']);
+        Route::patch('/admin/dashboard-notifications/{notification}/read', [DashboardNotificationController::class, 'markRead']);
+        Route::get('/admin/dashboard-notifications/settings', [DashboardNotificationController::class, 'getSettings']);
+        Route::patch('/admin/dashboard-notifications/settings', [DashboardNotificationController::class, 'updateSettings']);
 
         // Settings
         Route::get('/settings/payment', [AdminSettingController::class, 'payment']);
