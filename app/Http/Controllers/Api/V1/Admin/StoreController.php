@@ -24,6 +24,7 @@ class StoreController extends Controller
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->search, fn ($q) => $q->where('name', 'like', "%{$request->search}%"))
             ->withCount(['products', 'orders'])
+            ->withSum(['orders as total_revenue' => fn ($q) => $q->whereIn('status', ['delivered', 'completed'])], 'total')
             ->latest()
             ->paginate($request->per_page ?? 20);
 
@@ -40,6 +41,7 @@ class StoreController extends Controller
                 'sales_count' => $store->sales_count,
                 'products_count' => $store->products_count,
                 'orders_count' => $store->orders_count,
+                'total_revenue' => (float) ($store->total_revenue ?? 0),
                 'seller' => $store->seller ? [
                     'id' => $store->seller->id,
                     'name' => $store->seller->name,
