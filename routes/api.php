@@ -32,6 +32,7 @@ use App\Http\Controllers\Api\V1\Seller\StoreController as SellerStoreController;
 use App\Http\Controllers\Api\V1\Seller\UploadController as SellerUploadController;
 use App\Http\Controllers\Api\V1\UploadController;
 use App\Http\Controllers\Api\V1\UserController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -197,6 +198,9 @@ Route::prefix('v1')->group(function () {
 
         // Notifications (admin broadcast)
         Route::post('/admin/notifications/send', [AdminNotificationController::class, 'send']);
+
+        // Broadcasting auth
+        Route::post('/broadcasting/auth', fn (Request $request) => Broadcast::auth($request));
 
         // Dashboard notifications (real-time)
         Route::get('/admin/dashboard-notifications', [DashboardNotificationController::class, 'index']);
