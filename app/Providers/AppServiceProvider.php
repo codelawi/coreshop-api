@@ -33,9 +33,14 @@ class AppServiceProvider extends ServiceProvider
         Product::observe(ProductObserver::class);
         User::observe(UserObserver::class);
 
-        RateLimiter::for('login', fn (Request $request) => Limit::perMinute(5)->by(
-            $request->input('email').'|'.$request->ip()
-        ));
+        RateLimiter::for('login', function (Request $request) {
+            $key = $request->input('email').'|'.$request->ip();
+
+            return [
+                Limit::perMinute(10)->by($key),
+                Limit::perHour(30)->by($key),
+            ];
+        });
 
         ResetPassword::createUrlUsing(fn ($user, string $token) => url('/api/v1/auth/reset-password').'?token='.$token.'&email='.urlencode($user->email));
     }
