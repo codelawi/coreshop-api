@@ -56,6 +56,7 @@ Route::prefix('v1')->group(function () {
             Route::patch('/onboarding', [AuthController::class, 'onboarding']);
             Route::post('/email/resend', [AuthController::class, 'resendVerification']);
             Route::patch('/push-token', [AuthController::class, 'savePushToken']);
+            Route::patch('/language', [AuthController::class, 'updateLanguage']);
             Route::patch('/profile', [AuthController::class, 'updateProfile']);
             Route::patch('/change-password', [AuthController::class, 'changePassword']);
             Route::delete('/account', [AuthController::class, 'deleteAccount']);
@@ -74,6 +75,7 @@ Route::prefix('v1')->group(function () {
 
     // Authenticated client routes
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/broadcasting/auth', fn () => Broadcast::auth(request()));
         Route::post('/upload/avatar', [UploadController::class, 'avatar']);
 
         Route::get('/client/fees', [AdminSettingController::class, 'payment']);

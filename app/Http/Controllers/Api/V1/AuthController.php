@@ -240,6 +240,15 @@ class AuthController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function updateLanguage(Request $request): JsonResponse
+    {
+        $request->validate(['language' => ['required', 'in:en,ar']]);
+
+        Auth::user()->update(['language' => $request->language]);
+
+        return response()->json(['success' => true]);
+    }
+
     public function forgotPassword(Request $request): JsonResponse
     {
         $request->validate(['email' => ['required', 'email']]);

@@ -151,7 +151,13 @@ class OrderService
             // Notify the seller about the new order
             $seller = $store->seller;
             if ($seller) {
-                $this->push->sendToUser($seller, 'New Order!', 'You have a new order #'.$order->id.' waiting for approval.', [
+                $lang = $seller->language ?? 'ar';
+                $title = $lang === 'ar' ? 'طلب جديد!' : 'New Order!';
+                $body = $lang === 'ar'
+                    ? "لديك طلب جديد رقم #{$order->id} ينتظر موافقتك."
+                    : "You have a new order #{$order->id} waiting for approval.";
+
+                $this->push->sendToUser($seller, $title, $body, [
                     'type' => 'new_order',
                     'order_id' => $order->id,
                 ]);

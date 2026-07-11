@@ -86,13 +86,24 @@ class OrderController extends Controller
 
     private function notifyClient(Order $order, string $status): void
     {
-        $messages = [
-            'approved' => ['Order Approved!', 'Your order #'.$order->id.' has been approved and will be prepared soon.'],
-            'preparing' => ['Being Prepared', 'The seller is preparing your order #'.$order->id.'.'],
-            'ready_for_pickup' => ['Ready for Pickup', 'Your order #'.$order->id.' is ready and waiting for a driver.'],
+        if (! $order->client) {
+            return;
+        }
+
+        $lang = $order->client->language ?? 'ar';
+        $id = $order->id;
+
+        $messages = $lang === 'ar' ? [
+            'approved' => ['تمت الموافقة على طلبك!', "تمت الموافقة على طلبك رقم #{$id} وسيتم تحضيره قريبًا."],
+            'preparing' => ['جاري التحضير', "البائع يحضّر طلبك رقم #{$id}."],
+            'ready_for_pickup' => ['جاهز للاستلام', "طلبك رقم #{$id} جاهز وينتظر السائق."],
+        ] : [
+            'approved' => ['Order Approved!', "Your order #{$id} has been approved and will be prepared soon."],
+            'preparing' => ['Being Prepared', "The seller is preparing your order #{$id}."],
+            'ready_for_pickup' => ['Ready for Pickup', "Your order #{$id} is ready and waiting for a driver."],
         ];
 
-        if (! isset($messages[$status]) || ! $order->client) {
+        if (! isset($messages[$status])) {
             return;
         }
 
@@ -113,10 +124,17 @@ class OrderController extends Controller
             return;
         }
 
-        $messages = [
-            'approved' => ['Order Confirmed', 'You confirmed order #'.$order->id.'. Start preparing it.'],
-            'preparing' => ['Preparing Order', 'You marked order #'.$order->id.' as being prepared.'],
-            'ready_for_pickup' => ['Awaiting Driver', 'Order #'.$order->id.' is ready. Waiting for a driver to pick it up.'],
+        $lang = $seller->language ?? 'ar';
+        $id = $order->id;
+
+        $messages = $lang === 'ar' ? [
+            'approved' => ['تم تأكيد الطلب', "قمت بتأكيد الطلب رقم #{$id}. ابدأ التحضير."],
+            'preparing' => ['جاري تحضير الطلب', "قمت بتحديد الطلب رقم #{$id} كقيد التحضير."],
+            'ready_for_pickup' => ['في انتظار السائق', "الطلب رقم #{$id} جاهز. ننتظر سائقًا لاستلامه."],
+        ] : [
+            'approved' => ['Order Confirmed', "You confirmed order #{$id}. Start preparing it."],
+            'preparing' => ['Preparing Order', "You marked order #{$id} as being prepared."],
+            'ready_for_pickup' => ['Awaiting Driver', "Order #{$id} is ready. Waiting for a driver to pick it up."],
         ];
 
         if (! isset($messages[$status])) {

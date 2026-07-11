@@ -65,19 +65,36 @@ class OrderController extends Controller
 
     private function notifyClient(Order $order, string $status): void
     {
-        $messages = [
-            'approved' => ['Order Approved!', 'Your order #'.$order->id.' has been approved and will be prepared soon.'],
-            'preparing' => ['Being Prepared', 'The seller is preparing your order #'.$order->id.'.'],
-            'ready_for_pickup' => ['Ready for Pickup', 'Your order #'.$order->id.' is ready and waiting for a driver.'],
-            'assigned' => ['Driver Assigned', 'A driver has been assigned to your order #'.$order->id.'.'],
-            'out_for_delivery' => ['On the Way!', 'Your order #'.$order->id.' is out for delivery.'],
-            'delivered' => ['Order Delivered!', 'Your order #'.$order->id.' has been delivered. Enjoy!'],
-            'completed' => ['Order Completed', 'Your order #'.$order->id.' has been completed. Thank you!'],
-            'cancelled' => ['Order Cancelled', 'Your order #'.$order->id.' has been cancelled.'],
-            'refunded' => ['Order Refunded', 'Your order #'.$order->id.' has been refunded.'],
+        if (! $order->client) {
+            return;
+        }
+
+        $lang = $order->client->language ?? 'ar';
+        $id = $order->id;
+
+        $messages = $lang === 'ar' ? [
+            'approved' => ['تمت الموافقة على طلبك!', "تمت الموافقة على طلبك رقم #{$id} وسيتم تحضيره قريبًا."],
+            'preparing' => ['جاري التحضير', "البائع يحضّر طلبك رقم #{$id}."],
+            'ready_for_pickup' => ['جاهز للاستلام', "طلبك رقم #{$id} جاهز وينتظر السائق."],
+            'assigned' => ['تم تعيين السائق', "تم تعيين سائق لطلبك رقم #{$id}."],
+            'out_for_delivery' => ['في الطريق!', "طلبك رقم #{$id} في طريقه إليك."],
+            'delivered' => ['تم التوصيل!', "تم توصيل طلبك رقم #{$id}. استمتع بتجربتك!"],
+            'completed' => ['اكتمل الطلب', "اكتمل طلبك رقم #{$id}. شكرًا لك!"],
+            'cancelled' => ['تم إلغاء الطلب', "تم إلغاء طلبك رقم #{$id}."],
+            'refunded' => ['تم استرداد المبلغ', "تم استرداد مبلغ طلبك رقم #{$id}."],
+        ] : [
+            'approved' => ['Order Approved!', "Your order #{$id} has been approved and will be prepared soon."],
+            'preparing' => ['Being Prepared', "The seller is preparing your order #{$id}."],
+            'ready_for_pickup' => ['Ready for Pickup', "Your order #{$id} is ready and waiting for a driver."],
+            'assigned' => ['Driver Assigned', "A driver has been assigned to your order #{$id}."],
+            'out_for_delivery' => ['On the Way!', "Your order #{$id} is out for delivery."],
+            'delivered' => ['Order Delivered!', "Your order #{$id} has been delivered. Enjoy!"],
+            'completed' => ['Order Completed', "Your order #{$id} has been completed. Thank you!"],
+            'cancelled' => ['Order Cancelled', "Your order #{$id} has been cancelled."],
+            'refunded' => ['Order Refunded', "Your order #{$id} has been refunded."],
         ];
 
-        if (! isset($messages[$status]) || ! $order->client) {
+        if (! isset($messages[$status])) {
             return;
         }
 
@@ -98,13 +115,23 @@ class OrderController extends Controller
             return;
         }
 
-        $messages = [
-            'assigned' => ['Driver Assigned', 'A driver has been assigned to order #'.$order->id.'.'],
-            'out_for_delivery' => ['Out for Delivery', 'Order #'.$order->id.' is now out for delivery.'],
-            'delivered' => ['Order Delivered', 'Order #'.$order->id.' has been delivered to the customer.'],
-            'completed' => ['Order Completed', 'Order #'.$order->id.' has been completed.'],
-            'cancelled' => ['Order Cancelled', 'Order #'.$order->id.' has been cancelled by the admin.'],
-            'refunded' => ['Order Refunded', 'Order #'.$order->id.' has been refunded by the admin.'],
+        $lang = $seller->language ?? 'ar';
+        $id = $order->id;
+
+        $messages = $lang === 'ar' ? [
+            'assigned' => ['تم تعيين السائق', "تم تعيين سائق للطلب رقم #{$id}."],
+            'out_for_delivery' => ['خرج للتوصيل', "الطلب رقم #{$id} خرج للتوصيل."],
+            'delivered' => ['تم التوصيل', "تم تسليم الطلب رقم #{$id} للعميل."],
+            'completed' => ['اكتمل الطلب', "اكتمل الطلب رقم #{$id}."],
+            'cancelled' => ['تم إلغاء الطلب', "تم إلغاء الطلب رقم #{$id} من قبل الإدارة."],
+            'refunded' => ['تم الاسترداد', "تم استرداد مبلغ الطلب رقم #{$id} من قبل الإدارة."],
+        ] : [
+            'assigned' => ['Driver Assigned', "A driver has been assigned to order #{$id}."],
+            'out_for_delivery' => ['Out for Delivery', "Order #{$id} is now out for delivery."],
+            'delivered' => ['Order Delivered', "Order #{$id} has been delivered to the customer."],
+            'completed' => ['Order Completed', "Order #{$id} has been completed."],
+            'cancelled' => ['Order Cancelled', "Order #{$id} has been cancelled by the admin."],
+            'refunded' => ['Order Refunded', "Order #{$id} has been refunded by the admin."],
         ];
 
         if (! isset($messages[$status])) {

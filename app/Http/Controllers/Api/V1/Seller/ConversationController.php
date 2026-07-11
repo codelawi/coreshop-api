@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Seller;
 
+use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
@@ -79,6 +80,7 @@ class ConversationController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
         $message->load('sender');
+        MessageSent::dispatch($message);
 
         $storeName = $conversation->store->name;
         $notifBody = $type === 'text'
