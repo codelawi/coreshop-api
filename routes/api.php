@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Api\V1\Admin\SecurityEventController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
+use App\Http\Controllers\Api\V1\Admin\SupportConversationController;
 use App\Http\Controllers\Api\V1\Admin\UploadController as AdminUploadController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -215,6 +216,12 @@ Route::prefix('v1')->group(function () {
         Route::patch('/admin/dashboard-notifications/{notification}/read', [DashboardNotificationController::class, 'markRead']);
         Route::get('/admin/dashboard-notifications/settings', [DashboardNotificationController::class, 'getSettings']);
         Route::patch('/admin/dashboard-notifications/settings', [DashboardNotificationController::class, 'updateSettings']);
+
+        // Support chat
+        Route::get('/admin/support', [SupportConversationController::class, 'index']);
+        Route::get('/admin/support/users/{user}', [SupportConversationController::class, 'show']);
+        Route::get('/admin/support/{supportConversation}/messages', [SupportConversationController::class, 'messages']);
+        Route::post('/admin/support/{supportConversation}/messages', [SupportConversationController::class, 'sendMessage']);
 
         // Settings
         Route::get('/settings/payment', [AdminSettingController::class, 'payment']);

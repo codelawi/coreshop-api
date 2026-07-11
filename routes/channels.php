@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Conversation;
+use App\Models\SupportConversation;
 use Illuminate\Support\Facades\Broadcast;
 
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
@@ -9,6 +10,16 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
 
 Broadcast::channel('admin-notifications', function ($user) {
     return $user->role === 'admin';
+});
+
+Broadcast::channel('support.{conversationId}', function ($user, $conversationId) {
+    $conversation = SupportConversation::find($conversationId);
+
+    if (! $conversation) {
+        return false;
+    }
+
+    return $user->role === 'admin' || $conversation->user_id === $user->id;
 });
 
 Broadcast::channel('conversation.{conversationId}', function ($user, $conversationId) {
