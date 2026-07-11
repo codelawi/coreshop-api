@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Client\OrderController as ClientOrderController;
 use App\Http\Controllers\Api\V1\Client\ProductController as ClientProductController;
 use App\Http\Controllers\Api\V1\Client\ReviewController as ClientReviewController;
 use App\Http\Controllers\Api\V1\Client\StoreController as ClientStoreController;
+use App\Http\Controllers\Api\V1\Client\SupportController as ClientSupportController;
 use App\Http\Controllers\Api\V1\Client\WishlistController as ClientWishlistController;
 use App\Http\Controllers\Api\V1\CouponController;
 use App\Http\Controllers\Api\V1\OrderController;
@@ -105,6 +106,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/client/notifications/unread-count', [ClientNotificationController::class, 'unreadCount']);
         Route::patch('/client/notifications/read-all', [ClientNotificationController::class, 'markAllRead']);
         Route::patch('/client/notifications/{id}', [ClientNotificationController::class, 'markRead']);
+
+        // Client support chat
+        Route::get('/client/support/conversation', [ClientSupportController::class, 'conversation']);
+        Route::get('/client/support/{supportConversation}/messages', [ClientSupportController::class, 'messages']);
+        Route::post('/client/support/{supportConversation}/messages', [ClientSupportController::class, 'sendMessage']);
 
         Route::get('/client/conversations', [ClientConversationController::class, 'index']);
         Route::post('/client/conversations', [ClientConversationController::class, 'store']);

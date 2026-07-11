@@ -7,12 +7,15 @@ use App\Http\Controllers\Controller;
 use App\Models\SupportConversation;
 use App\Models\SupportMessage;
 use App\Models\User;
+use App\Services\ExpoPushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SupportConversationController extends Controller
 {
+    public function __construct(private readonly ExpoPushService $push) {}
+
     public function index(): JsonResponse
     {
         $conversations = SupportConversation::with(['user', 'lastMessage.sender'])
@@ -60,6 +63,18 @@ class SupportConversationController extends Controller
         $message->load('sender');
 
         SupportMessageSent::dispatch($message);
+
+        $recipient = $supportConversation->user;
+        $lang = $recipient->language ?? 'ar';
+        $title = $lang === 'ar' ? 'رسالة جديدة من الدعم' : 'New Support Message';
+        $body = $lang === 'ar'
+            ? 'أرسل لك فريق الدعم رسالة جديدة.'
+            : 'The support team sent you a new message.';
+
+        $this->push->sendToUser($recipient, $title, $body, [
+            'type' => 'support_message',
+            'conversation_id' => $supportConversation->id,
+        ]);
 
         return response()->json(['success' => true, 'data' => $this->formatMessage($message)], 201);
     }
