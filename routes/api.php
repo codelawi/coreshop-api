@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryControl
 use App\Http\Controllers\Api\V1\Admin\DashboardNotificationController;
 use App\Http\Controllers\Api\V1\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
+use App\Http\Controllers\Api\V1\Admin\SecurityEventController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
 use App\Http\Controllers\Api\V1\Admin\UploadController as AdminUploadController;
@@ -198,6 +199,10 @@ Route::prefix('v1')->group(function () {
 
         // Notifications (admin broadcast)
         Route::post('/admin/notifications/send', [AdminNotificationController::class, 'send']);
+
+        // Security events
+        Route::get('/admin/security-events', [SecurityEventController::class, 'index']);
+        Route::get('/admin/security-events/stats', [SecurityEventController::class, 'stats']);
 
         // Broadcasting auth
         Route::post('/broadcasting/auth', fn () => Broadcast::auth(request()));
