@@ -6,15 +6,12 @@ use App\Events\SupportMessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\SupportConversation;
 use App\Models\SupportMessage;
-use App\Services\ExpoPushService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class SupportController extends Controller
 {
-    public function __construct(private readonly ExpoPushService $push) {}
-
     public function conversation(): JsonResponse
     {
         $conversation = SupportConversation::firstOrCreate(['user_id' => Auth::id()]);
@@ -27,7 +24,7 @@ class SupportController extends Controller
 
     public function messages(SupportConversation $supportConversation): JsonResponse
     {
-        abort_unless($supportConversation->user_id === Auth::id(), 403);
+        abort_unless((int) $supportConversation->user_id === (int) Auth::id(), 403);
 
         $messages = $supportConversation->messages()
             ->with('sender')
@@ -45,7 +42,7 @@ class SupportController extends Controller
 
     public function sendMessage(Request $request, SupportConversation $supportConversation): JsonResponse
     {
-        abort_unless($supportConversation->user_id === Auth::id(), 403);
+        abort_unless((int) $supportConversation->user_id === (int) Auth::id(), 403);
 
         $data = $request->validate(['body' => ['required', 'string', 'max:2000']]);
 
