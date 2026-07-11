@@ -19,7 +19,16 @@ class SecurityEventController extends Controller
             ->latest('created_at')
             ->paginate(50);
 
-        return response()->json(['success' => true, 'data' => $events]);
+        return response()->json([
+            'success' => true,
+            'data' => $events->items(),
+            'meta' => [
+                'current_page' => $events->currentPage(),
+                'last_page' => $events->lastPage(),
+                'per_page' => $events->perPage(),
+                'total' => $events->total(),
+            ],
+        ]);
     }
 
     public function stats(): JsonResponse
