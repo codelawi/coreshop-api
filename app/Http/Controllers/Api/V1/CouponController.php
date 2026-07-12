@@ -7,12 +7,13 @@ use App\Http\Resources\CouponResource;
 use App\Models\Coupon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CouponController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $coupons = Coupon::when($request->active, fn($q) => $q->where('active', $request->active === 'true'))
+        $coupons = Coupon::when($request->active, fn ($q) => $q->where('active', $request->active === 'true'))
             ->latest()
             ->paginate($request->per_page ?? 10);
 
@@ -42,6 +43,8 @@ class CouponController extends Controller
 
         $coupon = Coupon::create($data);
 
+        Cache::forget('coupons.check.'.strtoupper($coupon->code));
+
         return response()->json([
             'success' => true,
             'message' => 'Coupon created successfully',
@@ -52,7 +55,7 @@ class CouponController extends Controller
     public function update(Request $request, Coupon $coupon): JsonResponse
     {
         $data = $request->validate([
-            'code' => ['sometimes', 'string', 'unique:coupons,code,' . $coupon->id],
+            'code' => ['sometimes', 'string', 'unique:coupons,code,'.$coupon->id],
             'type' => ['sometimes', 'in:percentage,fixed'],
             'value' => ['sometimes', 'numeric', 'min:0'],
             'min_order_amount' => ['nullable', 'numeric', 'min:0'],
@@ -61,7 +64,13 @@ class CouponController extends Controller
             'expires_at' => ['nullable', 'date'],
         ]);
 
+        $oldCode = $coupon->code;
         $coupon->update($data);
+
+        Cache::forget('coupons.check.'.strtoupper($oldCode));
+        if (isset($data['code'])) {
+            Cache::forget('coupons.check.'.strtoupper($coupon->code));
+        }
 
         return response()->json([
             'success' => true,
@@ -72,7 +81,10 @@ class CouponController extends Controller
 
     public function destroy(Coupon $coupon): JsonResponse
     {
+        $code = $coupon->code;
         $coupon->delete();
+
+        Cache::forget('coupons.check.'.strtoupper($code));
 
         return response()->json([
             'success' => true,

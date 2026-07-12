@@ -10,6 +10,7 @@ use App\Models\ProductVariant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -133,6 +134,9 @@ class ProductController extends Controller
 
         $product->load(['category', 'productImages', 'variants']);
 
+        Cache::increment('products.version');
+        Cache::forget('home.index');
+
         return response()->json([
             'success' => true,
             'message' => 'Product submitted for review.',
@@ -205,6 +209,10 @@ class ProductController extends Controller
 
         $product->load(['category', 'productImages', 'variants']);
 
+        Cache::increment('products.version');
+        Cache::forget("products.show.{$product->id}");
+        Cache::forget('home.index');
+
         return response()->json([
             'success' => true,
             'message' => 'Product updated.',
@@ -216,7 +224,12 @@ class ProductController extends Controller
     {
         $this->authorizeProduct($product);
 
+        $productId = $product->id;
         $product->delete();
+
+        Cache::increment('products.version');
+        Cache::forget("products.show.{$productId}");
+        Cache::forget('home.index');
 
         return response()->json(['success' => true, 'message' => 'Product deleted.']);
     }

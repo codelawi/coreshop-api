@@ -8,6 +8,7 @@ use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
@@ -84,6 +85,10 @@ class ProductController extends Controller
         ]);
 
         $product->update(['status' => $request->status]);
+
+        Cache::increment('products.version');
+        Cache::forget("products.show.{$product->id}");
+        Cache::forget('home.index');
 
         return response()->json([
             'success' => true,

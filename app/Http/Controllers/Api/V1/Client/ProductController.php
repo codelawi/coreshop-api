@@ -6,49 +6,56 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class ProductController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Product::approved()
-            ->inStock()
-            ->with(['productImages' => fn($q) => $q->where('is_primary', true)]);
+        $perPage = min((int) $request->get('per_page', 20), 100);
+        $version = Cache::get('products.version', 1);
+        $key = 'products.index.v'.$version.'.'.md5(json_encode($request->all()));
 
-        if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
-        }
+        $products = Cache::remember($key, now()->addMinutes(5), function () use ($request, $perPage) {
+            $query = Product::approved()
+                ->inStock()
+                ->with(['productImages' => fn ($q) => $q->where('is_primary', true)]);
 
-        if ($request->filled('store_id')) {
-            $query->where('store_id', $request->store_id);
-        }
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
 
-        if ($request->filled('search')) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
+            if ($request->filled('store_id')) {
+                $query->where('store_id', $request->store_id);
+            }
 
-        if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
-        }
+            if ($request->filled('search')) {
+                $query->where('name', 'like', '%'.$request->search.'%');
+            }
 
-        if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
-        }
+            if ($request->filled('min_price')) {
+                $query->where('price', '>=', $request->min_price);
+            }
 
-        $sort = $request->get('sort', 'newest');
-        match ($sort) {
-            'price_low' => $query->orderBy('price'),
-            'price_high' => $query->orderByDesc('price'),
-            'rating' => $query->orderByDesc('rating'),
-            'popular' => $query->orderByDesc('sales_count'),
-            default => $query->latest(),
-        };
+            if ($request->filled('max_price')) {
+                $query->where('price', '<=', $request->max_price);
+            }
 
-        $products = $query->paginate($request->get('per_page', 20));
+            $sort = $request->get('sort', 'newest');
+            match ($sort) {
+                'price_low' => $query->orderBy('price'),
+                'price_high' => $query->orderByDesc('price'),
+                'rating' => $query->orderByDesc('rating'),
+                'popular' => $query->orderByDesc('sales_count'),
+                default => $query->latest(),
+            };
+
+            return $query->paginate($perPage);
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $products->getCollection()->map(fn($p) => [
+            'data' => $products->getCollection()->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'slug' => $p->slug,
@@ -79,18 +86,24 @@ class ProductController extends Controller
             ], 404);
         }
 
+        // Always increment views — do not cache this side effect
         $product->increment('views_count');
-        $product->load([
-            'productImages',
-            'variants',
-            'category',
-            'store:id,name,slug,logo,rating,reviews_count,city',
-            'reviews' => fn($q) => $q->latest()->limit(5),
-            'reviews.user:id,name,avatar',
-        ]);
 
-        $data = $product->toArray();
-        $data['discount_percent'] = $product->discount_percent;
+        $data = Cache::remember("products.show.{$product->id}", now()->addMinutes(10), function () use ($product) {
+            $product->load([
+                'productImages',
+                'variants',
+                'category',
+                'store:id,name,slug,logo,rating,reviews_count,city',
+                'reviews' => fn ($q) => $q->latest()->limit(5),
+                'reviews.user:id,name,avatar',
+            ]);
+
+            $result = $product->toArray();
+            $result['discount_percent'] = $product->discount_percent;
+
+            return $result;
+        });
 
         return response()->json([
             'success' => true,
