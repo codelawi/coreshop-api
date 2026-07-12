@@ -50,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 Request::HEADER_X_FORWARDED_PROTO,
         );
 
+        $middleware->throttleApi('api');
         $middleware->alias([
             'role' => RoleMiddleware::class,
         ]);
