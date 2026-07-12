@@ -2,15 +2,12 @@
 
 namespace App\Services;
 
+use App\Jobs\SendPushNotification;
 use App\Models\User;
 use App\Models\UserNotification;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 
 class ExpoPushService
 {
-    private const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-
     public function sendToUser(User $user, string $title, string $body, array $data = []): void
     {
         UserNotification::create([
@@ -28,53 +25,18 @@ class ExpoPushService
             return;
         }
 
-        $this->send($token, $title, $body, $data);
+        SendPushNotification::dispatch($token, $title, $body, $data);
     }
 
-    public function send(string $token, string $title, string $body, array $data = []): void
-    {
-        try {
-            Http::withHeaders(['Accept-Encoding' => 'gzip, deflate'])
-                ->post(self::EXPO_PUSH_URL, [
-                    'to' => $token,
-                    'title' => $title,
-                    'body' => $body,
-                    'data' => $data,
-                    'sound' => 'default',
-                    'priority' => 'high',
-                    'channelId' => 'coreshop_v2',
-                ]);
-        } catch (\Throwable $e) {
-            Log::warning('Expo push failed', ['token' => $token, 'error' => $e->getMessage()]);
-        }
-    }
-
-    /**
-     * @param  array<string>  $tokens
-     */
+    /** @param array<string> $tokens */
     public function sendBatch(array $tokens, string $title, string $body, array $data = []): void
     {
-        $tokens = array_filter($tokens);
+        $tokens = array_values(array_filter($tokens));
 
         if (empty($tokens)) {
             return;
         }
 
-        $messages = array_map(fn (string $token) => [
-            'to' => $token,
-            'title' => $title,
-            'body' => $body,
-            'data' => $data,
-            'sound' => 'default',
-            'priority' => 'high',
-            'channelId' => 'coreshop_v2',
-        ], array_values($tokens));
-
-        try {
-            Http::withHeaders(['Accept-Encoding' => 'gzip, deflate'])
-                ->post(self::EXPO_PUSH_URL, $messages);
-        } catch (\Throwable $e) {
-            Log::warning('Expo push batch failed', ['error' => $e->getMessage()]);
-        }
+        SendPushNotification::dispatch($tokens, $title, $body, $data);
     }
 }
