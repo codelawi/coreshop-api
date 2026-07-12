@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Coupon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class CouponController extends Controller
 {
@@ -16,7 +17,11 @@ class CouponController extends Controller
             'subtotal' => ['required', 'numeric', 'min:0'],
         ]);
 
-        $coupon = Coupon::where('code', $request->code)->first();
+        $coupon = Cache::remember(
+            'coupons.check.'.strtoupper($request->code),
+            now()->addMinutes(2),
+            fn () => Coupon::where('code', $request->code)->first()
+        );
 
         if (! $coupon || ! $coupon->isValid()) {
             return response()->json([

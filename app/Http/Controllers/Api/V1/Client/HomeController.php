@@ -8,60 +8,65 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Store;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class HomeController extends Controller
 {
     public function index(): JsonResponse
     {
-        $banners = Banner::active()
-            ->orderBy('sort_order')
-            ->limit(5)
-            ->get(['id', 'title', 'subtitle', 'image', 'link_type', 'link_value']);
+        $data = Cache::remember('home.index', now()->addMinutes(10), function () {
+            $banners = Banner::active()
+                ->orderBy('sort_order')
+                ->limit(5)
+                ->get(['id', 'title', 'subtitle', 'image', 'link_type', 'link_value']);
 
-        $categories = Category::active()
-            ->roots()
-            ->orderBy('sort_order')
-            ->limit(10)
-            ->get(['id', 'name', 'name_ar', 'slug', 'image', 'icon']);
+            $categories = Category::active()
+                ->roots()
+                ->orderBy('sort_order')
+                ->limit(10)
+                ->get(['id', 'name', 'name_ar', 'slug', 'image', 'icon']);
 
-        $flashDeals = Product::approved()
-            ->inStock()
-            ->whereNotNull('original_price')
-            ->whereColumn('price', '<', 'original_price')
-            ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
-            ->orderByDesc('sales_count')
-            ->limit(10)
-            ->get();
+            $flashDeals = Product::approved()
+                ->inStock()
+                ->whereNotNull('original_price')
+                ->whereColumn('price', '<', 'original_price')
+                ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
+                ->orderByDesc('sales_count')
+                ->limit(10)
+                ->get();
 
-        $trending = Product::approved()
-            ->inStock()
-            ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
-            ->orderByDesc('sales_count')
-            ->limit(10)
-            ->get();
+            $trending = Product::approved()
+                ->inStock()
+                ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
+                ->orderByDesc('sales_count')
+                ->limit(10)
+                ->get();
 
-        $featured = Product::approved()
-            ->inStock()
-            ->where('is_featured', true)
-            ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
-            ->limit(10)
-            ->get();
+            $featured = Product::approved()
+                ->inStock()
+                ->where('is_featured', true)
+                ->with(['productImages' => fn ($q) => $q->where('is_primary', true)])
+                ->limit(10)
+                ->get();
 
-        $topStores = Store::active()
-            ->orderByDesc('rating')
-            ->limit(8)
-            ->get(['id', 'name', 'slug', 'logo', 'banner', 'rating', 'reviews_count', 'city']);
+            $topStores = Store::active()
+                ->orderByDesc('rating')
+                ->limit(8)
+                ->get(['id', 'name', 'slug', 'logo', 'banner', 'rating', 'reviews_count', 'city']);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
+            return [
                 'banners' => $banners,
                 'categories' => $categories,
                 'flash_deals' => $this->mapProducts($flashDeals),
                 'trending' => $this->mapProducts($trending),
                 'featured' => $this->mapProducts($featured),
                 'top_stores' => $topStores,
-            ],
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
         ]);
     }
 

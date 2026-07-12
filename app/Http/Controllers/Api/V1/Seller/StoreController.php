@@ -8,6 +8,7 @@ use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class StoreController extends Controller
@@ -92,6 +93,10 @@ class StoreController extends Controller
         $store->update($data);
         $store->loadCount(['products', 'orders as pending_orders_count' => fn ($q) => $q->where('status', 'pending')]);
 
+        Cache::increment('stores.version');
+        Cache::forget("stores.show.{$store->id}");
+        Cache::forget('home.index');
+
         return response()->json([
             'success' => true,
             'message' => 'Store updated successfully.',
@@ -108,6 +113,9 @@ class StoreController extends Controller
         }
 
         $store->update(['is_open' => ! $store->is_open]);
+
+        Cache::increment('stores.version');
+        Cache::forget("stores.show.{$store->id}");
 
         return response()->json([
             'success' => true,
