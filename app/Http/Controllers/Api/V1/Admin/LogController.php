@@ -16,21 +16,29 @@ class LogController extends Controller
             'level' => ['nullable', 'string', 'in:emergency,alert,critical,error,warning,notice,info,debug'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:500'],
             'search' => ['nullable', 'string', 'max:200'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
         ]);
-
-        $logPath = storage_path('logs/laravel.log');
-
-        if (! file_exists($logPath)) {
-            return response()->json([
-                'success' => true,
-                'data' => [],
-                'meta' => ['total' => 0, 'file_size_kb' => 0],
-            ]);
-        }
 
         $limit = (int) $request->get('limit', 100);
         $levelFilter = strtolower($request->get('level', ''));
         $search = $request->get('search', '');
+        $date = $request->get('date', now()->toDateString());
+
+        $logPath = $this->resolveLogPath($date);
+
+        if (! $logPath || ! file_exists($logPath)) {
+            return response()->json([
+                'success' => true,
+                'data' => [],
+                'meta' => [
+                    'total' => 0,
+                    'file_size_kb' => 0,
+                    'date' => $date,
+                    'available_dates' => $this->availableDates(),
+                    'levels' => self::LEVELS,
+                ],
+            ]);
+        }
 
         $entries = $this->parseLog($logPath, $limit * 3);
 
@@ -50,23 +58,61 @@ class LogController extends Controller
             'meta' => [
                 'total' => count($entries),
                 'file_size_kb' => round(filesize($logPath) / 1024, 1),
+                'date' => $date,
+                'available_dates' => $this->availableDates(),
                 'levels' => self::LEVELS,
             ],
         ]);
     }
 
-    public function clear(): JsonResponse
+    public function clear(Request $request): JsonResponse
     {
-        $logPath = storage_path('logs/laravel.log');
+        $request->validate([
+            'date' => ['nullable', 'date_format:Y-m-d'],
+        ]);
 
-        if (file_exists($logPath)) {
+        $date = $request->get('date', now()->toDateString());
+        $logPath = $this->resolveLogPath($date);
+
+        if ($logPath && file_exists($logPath)) {
             file_put_contents($logPath, '');
         }
 
         return response()->json([
             'success' => true,
-            'message' => 'Log file cleared.',
+            'message' => "Log cleared for {$date}.",
         ]);
+    }
+
+    /** @return array<string> */
+    private function availableDates(): array
+    {
+        $files = glob(storage_path('logs/laravel-*.log')) ?: [];
+
+        return collect($files)
+            ->map(fn ($f) => preg_replace('/.*laravel-(.+)\.log$/', '$1', $f))
+            ->filter(fn ($d) => preg_match('/^\d{4}-\d{2}-\d{2}$/', $d))
+            ->sortDesc()
+            ->take(14)
+            ->values()
+            ->all();
+    }
+
+    private function resolveLogPath(string $date): ?string
+    {
+        // Daily rotation: storage/logs/laravel-YYYY-MM-DD.log
+        $daily = storage_path("logs/laravel-{$date}.log");
+        if (file_exists($daily)) {
+            return $daily;
+        }
+
+        // Fallback: single file
+        $single = storage_path('logs/laravel.log');
+        if (file_exists($single)) {
+            return $single;
+        }
+
+        return null;
     }
 
     /** @return array<int, array{timestamp: string, level: string, message: string, context: array<mixed>|null}> */
@@ -77,10 +123,9 @@ class LogController extends Controller
             return [];
         }
 
-        // Read only last ~512KB to avoid loading huge files into memory
+        // Read only last ~512KB to stay memory-safe on large files
         $maxBytes = 512 * 1024;
-        $fileSize = filesize($path);
-        if ($fileSize > $maxBytes) {
+        if (filesize($path) > $maxBytes) {
             fseek($handle, -$maxBytes, SEEK_END);
             fgets($handle); // skip partial first line
         }
@@ -99,7 +144,6 @@ class LogController extends Controller
                 $message = $m[3];
                 $context = null;
 
-                // Extract JSON context if present
                 if (($jsonStart = strpos($message, ' {"')) !== false) {
                     $jsonStr = substr($message, $jsonStart + 1);
                     $decoded = json_decode($jsonStr, true);
@@ -124,7 +168,6 @@ class LogController extends Controller
 
         fclose($handle);
 
-        // Return newest first, up to limit
         return array_slice(array_reverse($entries), 0, $limit);
     }
 }
