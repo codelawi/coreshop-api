@@ -263,8 +263,8 @@ class AuthController extends Controller
 
     public function showResetForm(Request $request): Response
     {
-        $token = $request->query('token', '');
-        $email = $request->query('email', '');
+        $token = e($request->query('token', ''));
+        $email = e($request->query('email', ''));
 
         $html = <<<HTML
         <!DOCTYPE html>
@@ -355,8 +355,8 @@ class AuthController extends Controller
             return response($html, 200, ['Content-Type' => 'text/html']);
         }
 
-        $token = $request->input('token', '');
-        $email = $request->input('email', '');
+        $token = e($request->input('token', ''));
+        $email = e($request->input('email', ''));
         $errorMsg = $status === Password::INVALID_TOKEN ? 'This reset link has expired or is invalid. Please request a new one.' : 'No account found with that email address.';
 
         $html = <<<HTML
