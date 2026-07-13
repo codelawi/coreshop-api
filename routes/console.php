@@ -9,7 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Process queued jobs every minute (for shared hosting without persistent workers)
-Schedule::command('queue:work --once --tries=3 --max-time=50')
+Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=3')
     ->everyMinute()
-    ->withoutOverlapping()
+    ->withoutOverlapping(5)
     ->runInBackground();
