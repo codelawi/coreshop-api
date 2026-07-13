@@ -36,7 +36,7 @@ class CategoryController extends Controller
         $base = Str::slug($data['name']);
         $slug = $base;
         $i = 1;
-        while (Category::withTrashed()->where('slug', $slug)->exists()) {
+        while (Category::where('slug', $slug)->exists()) {
             $slug = $base.'-'.$i++;
         }
 
