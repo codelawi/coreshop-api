@@ -16,7 +16,8 @@ class CategoryController extends Controller
                 ->roots()
                 ->with(['children' => fn ($q) => $q->active()->orderBy('sort_order')])
                 ->orderBy('sort_order')
-                ->get();
+                ->get()
+                ->toArray();
         });
 
         return response()->json([
@@ -30,7 +31,7 @@ class CategoryController extends Controller
         $data = Cache::remember("categories.show.{$category->id}", now()->addMinutes(30), function () use ($category) {
             $category->load(['children' => fn ($q) => $q->active()->orderBy('sort_order')]);
 
-            return $category;
+            return $category->toArray();
         });
 
         return response()->json([
