@@ -16,7 +16,7 @@ class ProductController extends Controller
         $version = Cache::get('products.version', 1);
         $key = 'products.index.v'.$version.'.'.md5(json_encode($request->all()));
 
-        $products = Cache::remember($key, now()->addMinutes(5), function () use ($request, $perPage) {
+        $cached = Cache::remember($key, now()->addMinutes(5), function () use ($request, $perPage) {
             $query = Product::approved()
                 ->inStock()
                 ->with(['productImages' => fn ($q) => $q->where('is_primary', true)]);
@@ -50,30 +50,35 @@ class ProductController extends Controller
                 default => $query->latest(),
             };
 
-            return $query->paginate($perPage);
+            $paginator = $query->paginate($perPage);
+
+            return [
+                'items' => $paginator->getCollection()->map(fn ($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'slug' => $p->slug,
+                    'price' => $p->price,
+                    'original_price' => $p->original_price,
+                    'discount_percent' => $p->discount_percent,
+                    'rating' => $p->rating,
+                    'reviews_count' => $p->reviews_count,
+                    'sales_count' => $p->sales_count,
+                    'image' => $p->productImages->first()?->url,
+                    'store_id' => $p->store_id,
+                ])->all(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ],
+            ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => $products->getCollection()->map(fn ($p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'slug' => $p->slug,
-                'price' => $p->price,
-                'original_price' => $p->original_price,
-                'discount_percent' => $p->discount_percent,
-                'rating' => $p->rating,
-                'reviews_count' => $p->reviews_count,
-                'sales_count' => $p->sales_count,
-                'image' => $p->productImages->first()?->url,
-                'store_id' => $p->store_id,
-            ])->all(),
-            'meta' => [
-                'current_page' => $products->currentPage(),
-                'last_page' => $products->lastPage(),
-                'per_page' => $products->perPage(),
-                'total' => $products->total(),
-            ],
+            'data' => $cached['items'],
+            'meta' => $cached['meta'],
         ]);
     }
 
