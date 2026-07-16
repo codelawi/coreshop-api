@@ -151,13 +151,13 @@ class OrderController extends Controller
     {
         if ($order->client?->email) {
             Mail::to($order->client->email)
-                ->queue(new OrderCompletedMail($order, 'client'));
+                ->send(new OrderCompletedMail($order, 'client'));
         }
 
         $seller = $order->store?->seller;
         if ($seller?->email) {
             Mail::to($seller->email)
-                ->queue(new OrderCompletedMail($order, 'seller'));
+                ->send(new OrderCompletedMail($order, 'seller'));
         }
     }
 }

@@ -4,16 +4,12 @@ namespace App\Mail;
 
 use App\Models\Order;
 use App\Models\Setting;
-use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
-use Illuminate\Queue\SerializesModels;
 
 class OrderCompletedMail extends Mailable
 {
-    use Queueable, SerializesModels;
-
     public function __construct(
         public readonly Order $order,
         public readonly string $recipientType, // 'client' or 'seller'

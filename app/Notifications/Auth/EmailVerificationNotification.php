@@ -2,16 +2,12 @@
 
 namespace App\Notifications\Auth;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\URL;
 
-class EmailVerificationNotification extends Notification implements ShouldQueue
+class EmailVerificationNotification extends Notification
 {
-    use Queueable;
-
     public function via(object $notifiable): array
     {
         return ['mail'];

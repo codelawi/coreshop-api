@@ -2,18 +2,13 @@
 
 namespace App\Jobs;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class SendPushNotification implements ShouldQueue
+class SendPushNotification
 {
-    use Queueable;
-
-    public int $tries = 3;
-
-    public int $backoff = 10;
+    use Dispatchable;
 
     /** @param array<string>|string $tokens */
     public function __construct(
@@ -41,16 +36,15 @@ class SendPushNotification implements ShouldQueue
             'channelId' => 'coreshop_v2',
         ], $tokens);
 
-        Http::withHeaders(['Accept-Encoding' => 'gzip, deflate'])
-            ->post('https://exp.host/--/api/v2/push/send', count($messages) === 1 ? $messages[0] : $messages)
-            ->throw();
-    }
-
-    public function failed(\Throwable $e): void
-    {
-        Log::warning('Expo push job failed', [
-            'tokens' => $this->tokens,
-            'error' => $e->getMessage(),
-        ]);
+        try {
+            Http::withHeaders(['Accept-Encoding' => 'gzip, deflate'])
+                ->post('https://exp.host/--/api/v2/push/send', count($messages) === 1 ? $messages[0] : $messages)
+                ->throw();
+        } catch (\Throwable $e) {
+            Log::warning('Expo push notification failed', [
+                'tokens' => $this->tokens,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }
