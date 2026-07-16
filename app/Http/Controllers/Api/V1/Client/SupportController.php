@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1\Client;
 
+use App\Events\AdminNotificationCreated;
 use App\Events\SupportMessageSent;
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\SupportConversation;
 use App\Models\SupportMessage;
 use Illuminate\Http\JsonResponse;
@@ -55,6 +57,14 @@ class SupportController extends Controller
         $message->load('sender');
 
         SupportMessageSent::dispatch($message);
+
+        $notification = AdminNotification::create([
+            'type' => 'new_support_message',
+            'title' => 'New Support Message',
+            'body' => "{$message->sender->name}: {$data['body']}",
+            'data' => ['conversation_id' => $supportConversation->id],
+        ]);
+        AdminNotificationCreated::dispatch($notification);
 
         return response()->json(['success' => true, 'data' => $this->formatMessage($message)], 201);
     }

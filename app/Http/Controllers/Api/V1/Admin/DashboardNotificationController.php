@@ -36,9 +36,15 @@ class DashboardNotificationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    public function markAllRead(): JsonResponse
+    public function markAllRead(Request $request): JsonResponse
     {
-        AdminNotification::whereNull('read_at')->update(['read_at' => now()]);
+        $query = AdminNotification::whereNull('read_at');
+
+        if ($request->filled('type')) {
+            $query->where('type', $request->input('type'));
+        }
+
+        $query->update(['read_at' => now()]);
 
         return response()->json(['success' => true]);
     }

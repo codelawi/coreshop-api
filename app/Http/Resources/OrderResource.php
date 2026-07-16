@@ -15,6 +15,7 @@ class OrderResource extends JsonResource
                 'id' => $this->client->id,
                 'name' => $this->client->name,
                 'email' => $this->client->email,
+                'avatar' => $this->client->avatar,
             ],
             'coupon' => $this->coupon ? [
                 'id' => $this->coupon->id,
