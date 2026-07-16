@@ -126,7 +126,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function avatar(): Attribute
     {
         return Attribute::get(
-            fn ($value) => $value ?? 'https://api.dicebear.com/9.x/lorelei/png?seed='.$this->id.'&size=80'
+            fn ($value) => $value ?? 'https://api.dicebear.com/9.x/lorelei/png?seed='.$this->id.'&size=85'
         );
     }
 }
