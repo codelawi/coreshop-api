@@ -38,19 +38,26 @@ return new class extends Migration
             WHERE c.id != primary_conv.primary_id
         ');
 
-        // Step 3: Swap unique index — drop the (client_id, store_id, order_id) one,
-        // add a cleaner (client_id, store_id) only index.
+        // Step 3: Add the new index first so it can serve as the FK backing index,
+        // then drop the old one (MySQL requires a covering index to exist before
+        // the only existing one is removed when a FK references that column).
+        Schema::table('conversations', function (Blueprint $table) {
+            $table->unique(['client_id', 'store_id']);
+        });
+
         Schema::table('conversations', function (Blueprint $table) {
             $table->dropUnique(['client_id', 'store_id', 'order_id']);
-            $table->unique(['client_id', 'store_id']);
         });
     }
 
     public function down(): void
     {
         Schema::table('conversations', function (Blueprint $table) {
-            $table->dropUnique(['client_id', 'store_id']);
             $table->unique(['client_id', 'store_id', 'order_id']);
+        });
+
+        Schema::table('conversations', function (Blueprint $table) {
+            $table->dropUnique(['client_id', 'store_id']);
         });
     }
 };
