@@ -55,12 +55,35 @@ class HomeController extends Controller
                 ->get(['id', 'name', 'slug', 'logo', 'banner', 'rating', 'reviews_count', 'city']);
 
             return [
-                'banners' => $banners,
-                'categories' => $categories,
+                'banners' => $banners->map(fn ($b) => [
+                    'id' => $b->id,
+                    'title' => $b->title,
+                    'subtitle' => $b->subtitle,
+                    'image' => $b->image,
+                    'link_type' => $b->link_type,
+                    'link_value' => $b->link_value,
+                ])->all(),
+                'categories' => $categories->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'name_ar' => $c->name_ar,
+                    'slug' => $c->slug,
+                    'image' => $c->image,
+                    'icon' => $c->icon,
+                ])->all(),
                 'flash_deals' => $this->mapProducts($flashDeals),
                 'trending' => $this->mapProducts($trending),
                 'featured' => $this->mapProducts($featured),
-                'top_stores' => $topStores,
+                'top_stores' => $topStores->map(fn ($s) => [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'slug' => $s->slug,
+                    'logo' => $s->logo,
+                    'banner' => $s->banner,
+                    'rating' => $s->rating,
+                    'reviews_count' => $s->reviews_count,
+                    'city' => $s->city,
+                ])->all(),
             ];
         });
 
