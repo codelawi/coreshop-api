@@ -41,7 +41,6 @@ class ConversationController extends Controller
         $conversation = Conversation::firstOrCreate([
             'client_id' => Auth::id(),
             'store_id' => $data['store_id'],
-            'order_id' => $data['order_id'] ?? null,
         ]);
 
         $conversation->load(['store', 'client', 'messages' => fn ($q) => $q->latest()]);
