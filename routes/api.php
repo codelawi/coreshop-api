@@ -3,9 +3,9 @@
 use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\DashboardNotificationController;
+use App\Http\Controllers\Api\V1\Admin\LogController;
 use App\Http\Controllers\Api\V1\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
-use App\Http\Controllers\Api\V1\Admin\LogController;
 use App\Http\Controllers\Api\V1\Admin\SecurityEventController;
 use App\Http\Controllers\Api\V1\Admin\SettingController as AdminSettingController;
 use App\Http\Controllers\Api\V1\Admin\StoreController as AdminStoreController;
@@ -110,6 +110,7 @@ Route::prefix('v1')->group(function () {
 
         // Client support chat
         Route::get('/client/support/conversation', [ClientSupportController::class, 'conversation']);
+        Route::get('/client/support/unread-count', [ClientSupportController::class, 'unreadCount']);
         Route::get('/client/support/{supportConversation}/messages', [ClientSupportController::class, 'messages']);
         Route::post('/client/support/{supportConversation}/messages', [ClientSupportController::class, 'sendMessage']);
 

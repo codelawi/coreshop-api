@@ -8,9 +8,12 @@ use App\Models\SupportConversation;
 use App\Models\SupportMessage;
 use App\Models\User;
 use App\Services\ExpoPushService;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SupportConversationController extends Controller
 {
@@ -52,11 +55,31 @@ class SupportConversationController extends Controller
 
     public function sendMessage(Request $request, SupportConversation $supportConversation): JsonResponse
     {
-        $data = $request->validate(['body' => ['required', 'string', 'max:2000']]);
+        $data = $request->validate([
+            'body' => ['nullable', 'string', 'max:2000'],
+            'image' => ['nullable', 'file', 'max:10240', 'mimes:jpeg,png,webp,jpg,heic,heif'],
+        ]);
+
+        abort_if(empty($data['body']) && ! $request->hasFile('image'), 422);
+
+        $type = 'text';
+        $body = $data['body'] ?? '';
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = 'chat/'.Str::uuid().'.jpg';
+
+            /** @var FilesystemAdapter $disk */
+            $disk = Storage::disk('s3');
+            $disk->put($filename, $file->get(), ['ContentType' => 'image/jpeg']);
+            $body = rtrim(config('filesystems.disks.s3.url'), '/').'/'.$filename;
+            $type = 'image';
+        }
 
         $message = $supportConversation->messages()->create([
             'sender_id' => Auth::id(),
-            'body' => $data['body'],
+            'body' => $body,
+            'type' => $type,
         ]);
 
         $supportConversation->update(['last_message_at' => now()]);
@@ -67,11 +90,11 @@ class SupportConversationController extends Controller
         $recipient = $supportConversation->user;
         $lang = $recipient->language ?? 'ar';
         $title = $lang === 'ar' ? 'رسالة جديدة من الدعم' : 'New Support Message';
-        $body = $lang === 'ar'
-            ? 'أرسل لك فريق الدعم رسالة جديدة.'
-            : 'The support team sent you a new message.';
+        $pushBody = $type === 'image'
+            ? ($lang === 'ar' ? '📷 أرسل فريق الدعم صورة' : '📷 Support team sent a photo')
+            : Str::limit($body, 100);
 
-        $this->push->sendToUser($recipient, $title, $body, [
+        $this->push->sendToUser($recipient, $title, $pushBody, [
             'type' => 'support_message',
             'conversation_id' => $supportConversation->id,
         ]);
@@ -117,6 +140,7 @@ class SupportConversationController extends Controller
             'sender_name' => $m->sender->name,
             'sender_avatar' => $m->sender->avatar,
             'sender_role' => $m->sender->role,
+            'type' => $m->type ?? 'text',
             'body' => $m->body,
             'read_at' => $m->read_at?->toISOString(),
             'created_at' => $m->created_at->toISOString(),

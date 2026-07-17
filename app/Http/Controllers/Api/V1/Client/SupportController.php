@@ -8,9 +8,12 @@ use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
 use App\Models\SupportConversation;
 use App\Models\SupportMessage;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SupportController extends Controller
 {
@@ -22,6 +25,22 @@ class SupportController extends Controller
             'success' => true,
             'data' => ['id' => $conversation->id],
         ]);
+    }
+
+    public function unreadCount(): JsonResponse
+    {
+        $conversation = SupportConversation::where('user_id', Auth::id())->first();
+
+        if (! $conversation) {
+            return response()->json(['success' => true, 'data' => ['count' => 0]]);
+        }
+
+        $count = $conversation->messages()
+            ->where('sender_id', '!=', Auth::id())
+            ->whereNull('read_at')
+            ->count();
+
+        return response()->json(['success' => true, 'data' => ['count' => $count]]);
     }
 
     public function messages(SupportConversation $supportConversation): JsonResponse
@@ -46,11 +65,32 @@ class SupportController extends Controller
     {
         abort_unless((int) $supportConversation->user_id === (int) Auth::id(), 403);
 
-        $data = $request->validate(['body' => ['required', 'string', 'max:2000']]);
+        $data = $request->validate([
+            'body' => ['nullable', 'string', 'max:2000'],
+            'image' => ['nullable', 'file', 'max:10240', 'mimes:jpeg,png,webp,jpg,heic,heif'],
+            'type' => ['nullable', 'string', 'in:text,image'],
+        ]);
+
+        abort_if(empty($data['body']) && ! $request->hasFile('image'), 422);
+
+        $type = 'text';
+        $body = $data['body'] ?? '';
+
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = 'chat/'.Str::uuid().'.jpg';
+
+            /** @var FilesystemAdapter $disk */
+            $disk = Storage::disk('s3');
+            $disk->put($filename, $file->get(), ['ContentType' => 'image/jpeg']);
+            $body = rtrim(config('filesystems.disks.s3.url'), '/').'/'.$filename;
+            $type = 'image';
+        }
 
         $message = $supportConversation->messages()->create([
             'sender_id' => Auth::id(),
-            'body' => $data['body'],
+            'body' => $body,
+            'type' => $type,
         ]);
 
         $supportConversation->update(['last_message_at' => now()]);
@@ -58,10 +98,11 @@ class SupportController extends Controller
 
         SupportMessageSent::dispatch($message);
 
+        $previewBody = $type === 'image' ? '📷 Photo' : Str::limit($body, 100);
         $notification = AdminNotification::create([
             'type' => 'new_support_message',
-            'title' => 'New Support Message',
-            'body' => "{$message->sender->name}: {$data['body']}",
+            'title' => "{$message->sender->name}",
+            'body' => $previewBody,
             'data' => ['conversation_id' => $supportConversation->id],
         ]);
         AdminNotificationCreated::dispatch($notification);
@@ -81,6 +122,7 @@ class SupportController extends Controller
             'sender_name' => $m->sender->name,
             'sender_avatar' => $m->sender->avatar,
             'sender_role' => $m->sender->role,
+            'type' => $m->type ?? 'text',
             'body' => $m->body,
             'read_at' => $m->read_at?->toISOString(),
             'created_at' => $m->created_at->toISOString(),
