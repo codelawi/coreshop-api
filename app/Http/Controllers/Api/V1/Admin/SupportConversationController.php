@@ -21,7 +21,12 @@ class SupportConversationController extends Controller
 
     public function index(): JsonResponse
     {
-        $conversations = SupportConversation::with(['user', 'lastMessage.sender'])
+        $adminId = Auth::id();
+
+        $conversations = SupportConversation::withCount([
+            'messages as unread_count' => fn ($q) => $q->where('sender_id', '!=', $adminId)->whereNull('read_at'),
+        ])
+            ->with(['user', 'lastMessage.sender'])
             ->latest('last_message_at')
             ->get()
             ->map(fn ($c) => $this->formatConversation($c));
@@ -31,7 +36,12 @@ class SupportConversationController extends Controller
 
     public function show(User $user): JsonResponse
     {
+        $adminId = Auth::id();
+
         $conversation = SupportConversation::firstOrCreate(['user_id' => $user->id]);
+        $conversation->loadCount([
+            'messages as unread_count' => fn ($q) => $q->where('sender_id', '!=', $adminId)->whereNull('read_at'),
+        ]);
         $conversation->load(['user', 'lastMessage.sender']);
 
         return response()->json(['success' => true, 'data' => $this->formatConversation($conversation)]);
@@ -124,6 +134,7 @@ class SupportConversationController extends Controller
                 'created_at' => $last->created_at->toISOString(),
             ] : null,
             'last_message_at' => $c->last_message_at?->toISOString(),
+            'unread_count' => (int) ($c->unread_count ?? 0),
             'created_at' => $c->created_at->toISOString(),
         ];
     }
