@@ -63,6 +63,45 @@ class OrderController extends Controller
         ]);
     }
 
+    public function updatePaymentStatus(Request $request, Order $order): JsonResponse
+    {
+        $request->validate([
+            'payment_status' => ['required', 'in:unpaid,paid,refunded'],
+        ]);
+
+        $order->update(['payment_status' => $request->payment_status]);
+        $order->load(['client', 'coupon', 'items', 'store', 'address', 'driver']);
+
+        if ($request->payment_status === 'paid') {
+            $this->notifyClientPaymentApproved($order);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment status updated successfully',
+            'data' => new OrderResource($order),
+        ]);
+    }
+
+    private function notifyClientPaymentApproved(Order $order): void
+    {
+        if (! $order->client) {
+            return;
+        }
+
+        $lang = $order->client->language ?? 'ar';
+        $id = $order->id;
+
+        [$title, $body] = $lang === 'ar'
+            ? ['تم تأكيد الدفع', "تم التحقق من دفع طلبك رقم #{$id} عبر CliQ."]
+            : ['Payment Confirmed', "Your CliQ payment for order #{$id} has been verified."];
+
+        $this->push->sendToUser($order->client, $title, $body, [
+            'type' => 'payment_confirmed',
+            'order_id' => $order->id,
+        ]);
+    }
+
     private function notifyClient(Order $order, string $status): void
     {
         if (! $order->client) {

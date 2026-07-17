@@ -19,6 +19,7 @@ class ClientOrderResource extends JsonResource
             'total' => $this->total,
             'payment_method' => $this->payment_method,
             'payment_status' => $this->payment_status,
+            'cliq_reference' => $this->cliq_reference,
             'notes' => $this->notes,
             'store' => $this->whenLoaded('store', fn () => [
                 'id' => $this->store->id,

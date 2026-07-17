@@ -29,6 +29,7 @@ class OrderResource extends JsonResource
             'total' => $this->total,
             'payment_method' => $this->payment_method,
             'payment_status' => $this->payment_status,
+            'cliq_reference' => $this->cliq_reference,
             'notes' => $this->notes,
             'items_count' => $this->whenLoaded('items', fn () => $this->items->count(), $this->items_count ?? 0),
             'created_at' => $this->created_at->format('Y-m-d H:i'),

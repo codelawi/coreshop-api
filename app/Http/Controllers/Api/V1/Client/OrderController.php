@@ -20,6 +20,7 @@ class OrderController extends Controller
             'address_id' => ['required', 'integer'],
             'coupon_code' => ['nullable', 'string'],
             'payment_method' => ['nullable', 'string', 'in:cash_on_delivery,cliq'],
+            'cliq_reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:500'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],

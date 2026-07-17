@@ -22,7 +22,8 @@ class OrderService
      *   items: array<array{product_id: int, variant_id: int|null, quantity: int}>,
      *   coupon_code?: string|null,
      *   notes?: string|null,
-     *   payment_method?: string|null
+     *   payment_method?: string|null,
+     *   cliq_reference?: string|null
      * } $data
      */
     public function place(int $clientId, array $data): Order
@@ -141,6 +142,7 @@ class OrderService
                 'total' => $total,
                 'payment_method' => $data['payment_method'] ?? 'cash_on_delivery',
                 'payment_status' => 'unpaid',
+                'cliq_reference' => $data['cliq_reference'] ?? null,
                 'notes' => $data['notes'] ?? null,
                 'delivery_latitude' => $address->latitude,
                 'delivery_longitude' => $address->longitude,
