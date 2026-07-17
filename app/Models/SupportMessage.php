@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SupportMessage extends Model
 {
-    protected $fillable = ['support_conversation_id', 'sender_id', 'body', 'read_at'];
+    protected $fillable = ['support_conversation_id', 'sender_id', 'body', 'type', 'read_at'];
 
     protected $casts = [
         'read_at' => 'datetime',

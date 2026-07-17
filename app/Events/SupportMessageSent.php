@@ -26,7 +26,7 @@ class SupportMessageSent implements ShouldBroadcastNow
     }
 
     /**
-     * @return array{id: int, support_conversation_id: int, sender_id: int, sender_name: string, sender_avatar: string|null, sender_role: string, body: string, read_at: string|null, created_at: string}
+     * @return array{id: int, support_conversation_id: int, sender_id: int, sender_name: string, sender_avatar: string|null, sender_role: string, type: string, body: string, read_at: string|null, created_at: string}
      */
     public function broadcastWith(): array
     {
@@ -37,6 +37,7 @@ class SupportMessageSent implements ShouldBroadcastNow
             'sender_name' => $this->message->sender->name,
             'sender_avatar' => $this->message->sender->avatar,
             'sender_role' => $this->message->sender->role,
+            'type' => $this->message->type ?? 'text',
             'body' => $this->message->body,
             'read_at' => $this->message->read_at?->toISOString(),
             'created_at' => $this->message->created_at->toISOString(),
