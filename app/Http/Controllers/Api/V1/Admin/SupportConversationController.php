@@ -47,20 +47,40 @@ class SupportConversationController extends Controller
         return response()->json(['success' => true, 'data' => $this->formatConversation($conversation)]);
     }
 
-    public function messages(SupportConversation $supportConversation): JsonResponse
+    public function messages(Request $request, SupportConversation $supportConversation): JsonResponse
     {
-        $messages = $supportConversation->messages()
+        $limit = 10;
+        $beforeId = $request->query('before_id');
+
+        $query = $supportConversation->messages()
             ->with('sender')
-            ->oldest()
-            ->get()
-            ->map(fn ($m) => $this->formatMessage($m));
+            ->orderByDesc('id');
 
-        $supportConversation->messages()
-            ->where('sender_id', '!=', Auth::id())
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+        if ($beforeId) {
+            $query->where('id', '<', (int) $beforeId);
+        }
 
-        return response()->json(['success' => true, 'data' => $messages]);
+        $items = $query->limit($limit + 1)->get();
+        $hasMore = $items->count() > $limit;
+
+        if ($hasMore) {
+            $items = $items->take($limit);
+        }
+
+        $messages = $items->sortBy('id')->values()->map(fn ($m) => $this->formatMessage($m));
+
+        if (! $beforeId) {
+            $supportConversation->messages()
+                ->where('sender_id', '!=', Auth::id())
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $messages,
+            'meta' => ['has_more' => $hasMore],
+        ]);
     }
 
     public function sendMessage(Request $request, SupportConversation $supportConversation): JsonResponse
