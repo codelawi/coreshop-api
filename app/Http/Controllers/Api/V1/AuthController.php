@@ -233,7 +233,7 @@ class AuthController extends Controller
 
     public function savePushToken(Request $request): JsonResponse
     {
-        $request->validate(['token' => ['required', 'string']]);
+        $request->validate(['token' => ['nullable', 'string']]);
 
         Auth::user()->update(['expo_push_token' => $request->token]);
 
