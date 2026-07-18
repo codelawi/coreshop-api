@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\V1\Client\AddressController as ClientAddressControl
 use App\Http\Controllers\Api\V1\Client\CategoryController as ClientCategoryController;
 use App\Http\Controllers\Api\V1\Client\ConversationController as ClientConversationController;
 use App\Http\Controllers\Api\V1\Client\CouponController as ClientCouponController;
+use App\Http\Controllers\Api\V1\Client\FeedbackController as ClientFeedbackController;
 use App\Http\Controllers\Api\V1\Client\HomeController as ClientHomeController;
 use App\Http\Controllers\Api\V1\Client\NotificationController as ClientNotificationController;
 use App\Http\Controllers\Api\V1\Client\OrderController as ClientOrderController;
@@ -118,6 +119,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/client/conversations', [ClientConversationController::class, 'store']);
         Route::get('/client/conversations/{conversation}/messages', [ClientConversationController::class, 'messages']);
         Route::post('/client/conversations/{conversation}/messages', [ClientConversationController::class, 'sendMessage']);
+        Route::delete('/client/conversations/{conversation}', [ClientConversationController::class, 'destroy']);
+        Route::post('/feedback', [ClientFeedbackController::class, 'store']);
     });
 
     // Seller only routes
@@ -148,6 +151,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/conversations', [SellerConversationController::class, 'index']);
         Route::get('/conversations/{conversation}/messages', [SellerConversationController::class, 'messages']);
         Route::post('/conversations/{conversation}/messages', [SellerConversationController::class, 'sendMessage']);
+        Route::delete('/conversations/{conversation}', [SellerConversationController::class, 'destroy']);
     });
 
     // Admin only routes

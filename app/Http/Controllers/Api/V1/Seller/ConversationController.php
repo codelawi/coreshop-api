@@ -37,14 +37,22 @@ class ConversationController extends Controller
         ]);
     }
 
-    public function messages(Conversation $conversation): JsonResponse
+    public function messages(Conversation $conversation, Request $request): JsonResponse
     {
         $this->authorizeConversation($conversation);
 
-        $messages = $conversation->messages()
-            ->with('sender')
-            ->oldest()
-            ->get();
+        $beforeId = $request->query('before_id');
+        $limit = min((int) $request->query('limit', 50), 100);
+
+        $query = $conversation->messages()->with('sender');
+
+        if ($beforeId) {
+            $query->where('id', '<', (int) $beforeId);
+        }
+
+        $messages = $query->latest('id')->limit($limit + 1)->get();
+        $hasMore = $messages->count() > $limit;
+        $messages = $messages->take($limit)->reverse()->values();
 
         $conversation->messages()
             ->where('sender_id', '!=', Auth::id())
@@ -54,6 +62,7 @@ class ConversationController extends Controller
         return response()->json([
             'success' => true,
             'data' => MessageResource::collection($messages),
+            'meta' => ['has_more' => $hasMore],
         ]);
     }
 
@@ -98,6 +107,15 @@ class ConversationController extends Controller
             'success' => true,
             'data' => new MessageResource($message),
         ], 201);
+    }
+
+    public function destroy(Conversation $conversation): JsonResponse
+    {
+        $this->authorizeConversation($conversation);
+        $conversation->messages()->delete();
+        $conversation->delete();
+
+        return response()->json(['success' => true]);
     }
 
     private function authorizeConversation(Conversation $conversation): void

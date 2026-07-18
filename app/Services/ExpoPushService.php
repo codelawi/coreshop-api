@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\UserNotificationCreated;
 use App\Jobs\SendPushNotification;
 use App\Models\User;
 use App\Models\UserNotification;
@@ -10,13 +11,15 @@ class ExpoPushService
 {
     public function sendToUser(User $user, string $title, string $body, array $data = []): void
     {
-        UserNotification::create([
+        $notification = UserNotification::create([
             'user_id' => $user->id,
             'type' => $data['type'] ?? 'system',
             'title' => $title,
             'body' => $body,
             'data' => $data ?: null,
         ]);
+
+        event(new UserNotificationCreated($notification));
 
         /** @var string|null $token */
         $token = $user->getAttribute('expo_push_token');

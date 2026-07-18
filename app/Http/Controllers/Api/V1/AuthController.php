@@ -404,6 +404,7 @@ class AuthController extends Controller
 
     public function updateProfile(Request $request): JsonResponse
     {
+        /** @var User $user */
         $user = Auth::user();
 
         $data = $request->validate([
@@ -412,7 +413,17 @@ class AuthController extends Controller
             'avatar' => ['sometimes', 'nullable', 'string', 'max:500'],
         ]);
 
+        $emailChanged = isset($data['email']) && $data['email'] !== $user->email;
+
+        if ($emailChanged) {
+            $data['email_verified_at'] = null;
+        }
+
         $user->update($data);
+
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+        }
 
         return response()->json([
             'success' => true,

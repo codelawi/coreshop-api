@@ -43,22 +43,29 @@ class SupportController extends Controller
         return response()->json(['success' => true, 'data' => ['count' => $count]]);
     }
 
-    public function messages(SupportConversation $supportConversation): JsonResponse
+    public function messages(SupportConversation $supportConversation, Request $request): JsonResponse
     {
         abort_unless((int) $supportConversation->user_id === (int) Auth::id(), 403);
 
-        $messages = $supportConversation->messages()
-            ->with('sender')
-            ->oldest()
-            ->get()
-            ->map(fn ($m) => $this->formatMessage($m));
+        $beforeId = $request->query('before_id');
+        $limit = min((int) $request->query('limit', 50), 100);
+
+        $query = $supportConversation->messages()->with('sender');
+
+        if ($beforeId) {
+            $query->where('id', '<', (int) $beforeId);
+        }
+
+        $rawMessages = $query->latest('id')->limit($limit + 1)->get();
+        $hasMore = $rawMessages->count() > $limit;
+        $messages = $rawMessages->take($limit)->reverse()->values()->map(fn ($m) => $this->formatMessage($m));
 
         $supportConversation->messages()
             ->where('sender_id', '!=', Auth::id())
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
 
-        return response()->json(['success' => true, 'data' => $messages]);
+        return response()->json(['success' => true, 'data' => $messages, 'meta' => ['has_more' => $hasMore]]);
     }
 
     public function sendMessage(Request $request, SupportConversation $supportConversation): JsonResponse
