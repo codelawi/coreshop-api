@@ -20,6 +20,7 @@ class AnalyticsController extends Controller
             'success' => true,
             'data' => [
                 'total_revenue' => (clone $completedOrders)->sum('total'),
+                'total_platform_fee' => (clone $completedOrders)->sum('platform_fee'),
                 'total_orders' => Order::count(),
                 'total_users' => User::where('role', '!=', 'admin')->count(),
                 'total_products' => Product::where('status', 'approved')->count(),
