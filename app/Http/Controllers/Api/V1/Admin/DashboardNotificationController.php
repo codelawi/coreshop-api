@@ -10,13 +10,15 @@ use Illuminate\Http\Request;
 
 class DashboardNotificationController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $notifications = AdminNotification::orderByDesc('created_at')->limit(50)->get();
+        $perPage = min($request->integer('per_page', 20), 50);
+
+        $paginator = AdminNotification::orderByDesc('created_at')->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'data' => $notifications->map(fn (AdminNotification $n) => [
+            'data' => $paginator->getCollection()->map(fn (AdminNotification $n) => [
                 'id' => $n->id,
                 'type' => $n->type,
                 'title' => $n->title,
@@ -25,6 +27,7 @@ class DashboardNotificationController extends Controller
                 'read_at' => $n->read_at?->toISOString(),
                 'created_at' => $n->created_at->toISOString(),
             ]),
+            'has_more' => $paginator->hasMorePages(),
             'unread_count' => AdminNotification::whereNull('read_at')->count(),
         ]);
     }

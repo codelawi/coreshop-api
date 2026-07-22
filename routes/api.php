@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Admin\BannerController as AdminBannerController;
 use App\Http\Controllers\Api\V1\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Api\V1\Admin\DashboardNotificationController;
+use App\Http\Controllers\Api\V1\Admin\FeedbackController as AdminFeedbackController;
 use App\Http\Controllers\Api\V1\Admin\LogController;
 use App\Http\Controllers\Api\V1\Admin\NotificationController as AdminNotificationController;
 use App\Http\Controllers\Api\V1\Admin\ReviewController as AdminReviewController;
@@ -243,6 +244,10 @@ Route::prefix('v1')->group(function () {
         // Settings
         Route::get('/settings/payment', [AdminSettingController::class, 'payment']);
         Route::patch('/settings/payment', [AdminSettingController::class, 'updatePayment']);
+
+        // Feedback / Reports
+        Route::get('/admin/feedback', [AdminFeedbackController::class, 'index']);
+        Route::patch('/admin/feedback/{feedback}/status', [AdminFeedbackController::class, 'updateStatus']);
 
         // Analytics
         Route::prefix('analytics')->group(function () {

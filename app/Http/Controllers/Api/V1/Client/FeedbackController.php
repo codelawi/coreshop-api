@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1\Client;
 
+use App\Events\AdminNotificationCreated;
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
+use App\Models\Feedback;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class FeedbackController extends Controller
 {
@@ -18,12 +20,25 @@ class FeedbackController extends Controller
             'steps' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        Log::channel('stack')->info('User feedback received', [
+        $feedback = Feedback::create([
             'user_id' => Auth::id(),
             'type' => $data['type'],
             'description' => $data['description'],
             'steps' => $data['steps'] ?? null,
+            'status' => 'new',
         ]);
+
+        $user = Auth::user();
+        $typeLabel = $feedback->type === 'bug' ? 'Bug Report' : 'Problem Report';
+
+        $notification = AdminNotification::create([
+            'type' => 'new_feedback',
+            'title' => "New {$typeLabel}",
+            'body' => "{$user->name} submitted a {$feedback->type} report.",
+            'data' => ['feedback_id' => $feedback->id],
+        ]);
+
+        event(new AdminNotificationCreated($notification));
 
         return response()->json(['success' => true]);
     }
