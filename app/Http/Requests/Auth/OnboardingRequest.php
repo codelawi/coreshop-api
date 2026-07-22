@@ -20,7 +20,7 @@ class OnboardingRequest extends FormRequest
             'city' => ['required', 'string', 'max:100'],
             'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'interests' => ['required', 'array', 'min:3'],
+            'interests' => ['nullable', 'array'],
             'interests.*' => ['string', 'max:50'],
         ];
     }
