@@ -168,11 +168,12 @@ class AuthController extends Controller
     public function google(Request $request): JsonResponse
     {
         $request->validate([
-            'access_token' => ['required', 'string'],
+            'id_token' => ['required', 'string'],
         ]);
 
-        $googleResponse = Http::get('https://www.googleapis.com/oauth2/v2/userinfo', [
-            'access_token' => $request->access_token,
+        // Verify the ID token via Google's tokeninfo endpoint (no client secret needed)
+        $googleResponse = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $request->id_token,
         ]);
 
         if (! $googleResponse->ok()) {
