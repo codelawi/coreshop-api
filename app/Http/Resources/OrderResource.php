@@ -43,6 +43,7 @@ class OrderResource extends JsonResource
                 'id' => $this->store->seller->id,
                 'name' => $this->store->seller->name,
                 'email' => $this->store->seller->email,
+                'avatar' => $this->store->seller->avatar,
             ] : null),
             'address' => $this->whenLoaded('address', fn () => $this->address ? [
                 'label' => $this->address->label,
