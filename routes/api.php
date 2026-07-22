@@ -252,6 +252,10 @@ Route::prefix('v1')->group(function () {
             Route::get('/users', [AnalyticsController::class, 'users']);
             Route::get('/top-products', [AnalyticsController::class, 'topProducts']);
             Route::get('/top-sellers', [AnalyticsController::class, 'topSellers']);
+            Route::get('/categories', [AnalyticsController::class, 'categories']);
+            Route::get('/earnings', [AnalyticsController::class, 'earnings']);
+            Route::get('/store-stats', [AnalyticsController::class, 'storeStats']);
+            Route::get('/cities', [AnalyticsController::class, 'cities']);
         });
 
     });

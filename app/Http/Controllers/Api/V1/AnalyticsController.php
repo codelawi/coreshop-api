@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
@@ -133,5 +134,73 @@ class AnalyticsController extends Controller
                 'orders' => (int) $s->orders_count,
             ]),
         ]);
+    }
+
+    public function categories(): JsonResponse
+    {
+        $data = OrderItem::join('products', 'order_items.product_id', '=', 'products.id')
+            ->join('categories', 'products.category_id', '=', 'categories.id')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->whereIn('orders.status', ['delivered', 'completed'])
+            ->selectRaw('categories.name as category, SUM(order_items.total) as revenue, COUNT(DISTINCT orders.id) as `orders`')
+            ->groupBy('categories.id', 'categories.name')
+            ->orderByDesc('revenue')
+            ->limit(8)
+            ->get()
+            ->map(fn ($r) => [
+                'category' => $r->category,
+                'revenue' => (float) $r->revenue,
+                'orders' => (int) $r->orders,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function earnings(): JsonResponse
+    {
+        $data = Order::whereIn('status', ['delivered', 'completed'])
+            ->whereYear('created_at', now()->year)
+            ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue, SUM(platform_fee) as earnings')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->get()
+            ->map(fn ($r) => [
+                'month' => (int) $r->month,
+                'revenue' => (float) $r->revenue,
+                'earnings' => (float) $r->earnings,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function storeStats(): JsonResponse
+    {
+        $data = Store::selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->get()
+            ->map(fn ($r) => [
+                'status' => $r->status,
+                'count' => (int) $r->count,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
+
+    public function cities(): JsonResponse
+    {
+        $data = Order::join('addresses', 'orders.address_id', '=', 'addresses.id')
+            ->whereNotNull('addresses.city')
+            ->where('addresses.city', '!=', '')
+            ->selectRaw('addresses.city as city, COUNT(*) as `orders`')
+            ->groupBy('addresses.city')
+            ->orderByDesc('orders')
+            ->limit(8)
+            ->get()
+            ->map(fn ($r) => [
+                'city' => $r->city,
+                'orders' => (int) $r->orders,
+            ]);
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 }
