@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AnalyticsController extends Controller
 {
@@ -30,28 +31,50 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    public function revenue(): JsonResponse
+    public function revenue(Request $request): JsonResponse
     {
-        $revenue = Order::whereIn('status', ['delivered', 'completed'])
-            ->selectRaw('MONTH(created_at) as month, SUM(total) as total')
-            ->whereYear('created_at', now()->year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $period = $request->query('period', 'monthly');
+
+        if ($period === 'hourly') {
+            $revenue = Order::whereIn('status', ['delivered', 'completed'])
+                ->selectRaw('HOUR(created_at) as hour, SUM(total) as total')
+                ->whereDate('created_at', today())
+                ->groupBy('hour')
+                ->orderBy('hour')
+                ->get();
+        } else {
+            $revenue = Order::whereIn('status', ['delivered', 'completed'])
+                ->selectRaw('MONTH(created_at) as month, SUM(total) as total')
+                ->whereYear('created_at', now()->year)
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+        }
 
         return response()->json([
             'success' => true,
+            'period' => $period,
             'data' => $revenue,
         ]);
     }
 
-    public function orders(): JsonResponse
+    public function orders(Request $request): JsonResponse
     {
-        $monthly = Order::selectRaw('MONTH(created_at) as month, COUNT(*) as total')
-            ->whereYear('created_at', now()->year)
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $period = $request->query('period', 'monthly');
+
+        if ($period === 'hourly') {
+            $timeSeries = Order::selectRaw('HOUR(created_at) as hour, COUNT(*) as total')
+                ->whereDate('created_at', today())
+                ->groupBy('hour')
+                ->orderBy('hour')
+                ->get();
+        } else {
+            $timeSeries = Order::selectRaw('MONTH(created_at) as month, COUNT(*) as total')
+                ->whereYear('created_at', now()->year)
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
+        }
 
         $byStatus = Order::selectRaw('status, COUNT(*) as total')
             ->groupBy('status')
@@ -59,24 +82,37 @@ class AnalyticsController extends Controller
 
         return response()->json([
             'success' => true,
+            'period' => $period,
             'data' => [
-                'monthly' => $monthly,
+                'time_series' => $timeSeries,
                 'by_status' => $byStatus,
             ],
         ]);
     }
 
-    public function users(): JsonResponse
+    public function users(Request $request): JsonResponse
     {
-        $users = User::selectRaw('MONTH(created_at) as month, role, COUNT(*) as total')
-            ->whereYear('created_at', now()->year)
-            ->where('role', '!=', 'admin')
-            ->groupBy('month', 'role')
-            ->orderBy('month')
-            ->get();
+        $period = $request->query('period', 'monthly');
+
+        if ($period === 'hourly') {
+            $users = User::selectRaw('HOUR(created_at) as hour, role, COUNT(*) as total')
+                ->whereDate('created_at', today())
+                ->where('role', '!=', 'admin')
+                ->groupBy('hour', 'role')
+                ->orderBy('hour')
+                ->get();
+        } else {
+            $users = User::selectRaw('MONTH(created_at) as month, role, COUNT(*) as total')
+                ->whereYear('created_at', now()->year)
+                ->where('role', '!=', 'admin')
+                ->groupBy('month', 'role')
+                ->orderBy('month')
+                ->get();
+        }
 
         return response()->json([
             'success' => true,
+            'period' => $period,
             'data' => $users,
         ]);
     }
@@ -157,21 +193,37 @@ class AnalyticsController extends Controller
         return response()->json(['success' => true, 'data' => $data]);
     }
 
-    public function earnings(): JsonResponse
+    public function earnings(Request $request): JsonResponse
     {
-        $data = Order::whereIn('status', ['delivered', 'completed'])
-            ->whereYear('created_at', now()->year)
-            ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue, SUM(platform_fee) as earnings')
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get()
-            ->map(fn ($r) => [
-                'month' => (int) $r->month,
-                'revenue' => (float) $r->revenue,
-                'earnings' => (float) $r->earnings,
-            ]);
+        $period = $request->query('period', 'monthly');
 
-        return response()->json(['success' => true, 'data' => $data]);
+        if ($period === 'hourly') {
+            $data = Order::whereIn('status', ['delivered', 'completed'])
+                ->whereDate('created_at', today())
+                ->selectRaw('HOUR(created_at) as hour, SUM(total) as revenue, SUM(platform_fee) as earnings')
+                ->groupBy('hour')
+                ->orderBy('hour')
+                ->get()
+                ->map(fn ($r) => [
+                    'hour' => (int) $r->hour,
+                    'revenue' => (float) $r->revenue,
+                    'earnings' => (float) $r->earnings,
+                ]);
+        } else {
+            $data = Order::whereIn('status', ['delivered', 'completed'])
+                ->whereYear('created_at', now()->year)
+                ->selectRaw('MONTH(created_at) as month, SUM(total) as revenue, SUM(platform_fee) as earnings')
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->map(fn ($r) => [
+                    'month' => (int) $r->month,
+                    'revenue' => (float) $r->revenue,
+                    'earnings' => (float) $r->earnings,
+                ]);
+        }
+
+        return response()->json(['success' => true, 'period' => $period, 'data' => $data]);
     }
 
     public function storeStats(): JsonResponse
