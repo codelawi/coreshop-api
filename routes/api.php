@@ -47,7 +47,6 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
         Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:login');
-        Route::post('/google', [AuthController::class, 'google'])->middleware('throttle:login');
         Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:login');
         Route::get('/reset-password', [AuthController::class, 'showResetForm']);
         Route::post('/reset-password', [AuthController::class, 'resetPassword']);

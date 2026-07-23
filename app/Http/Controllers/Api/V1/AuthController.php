@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -162,72 +160,6 @@ class AuthController extends Controller
         return response()->json([
             'success' => true,
             'data' => $this->userPayload(Auth::user()),
-        ]);
-    }
-
-    public function google(Request $request): JsonResponse
-    {
-        $request->validate([
-            'access_token' => ['required', 'string'],
-        ]);
-
-        $googleResponse = Http::get('https://www.googleapis.com/oauth2/v2/userinfo', [
-            'access_token' => $request->access_token,
-        ]);
-
-        if (! $googleResponse->ok()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid Google token.',
-            ], 401);
-        }
-
-        $googleUser = $googleResponse->json();
-
-        if (empty($googleUser['email'])) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Google account has no email address.',
-            ], 422);
-        }
-
-        $user = User::firstOrCreate(
-            ['email' => $googleUser['email']],
-            [
-                'name' => $googleUser['name'] ?? $googleUser['email'],
-                'avatar' => $googleUser['picture'] ?? null,
-                'password' => Hash::make(Str::random(32)),
-                'role' => 'client',
-                'status' => 'active',
-                'onboarding_completed' => false,
-                'email_verified_at' => now(),
-            ]
-        );
-
-        if (! $user->hasVerifiedEmail()) {
-            $user->markEmailAsVerified();
-        }
-
-        if ($user->wasRecentlyCreated === false && $googleUser['picture'] && $user->avatar !== $googleUser['picture']) {
-            $user->update(['avatar' => $googleUser['picture']]);
-        }
-
-        if (! $user->isActive()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your account has been suspended.',
-            ], 403);
-        }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Signed in with Google',
-            'data' => [
-                'user' => $this->userPayload($user->fresh()),
-                'token' => $token,
-            ],
         ]);
     }
 
